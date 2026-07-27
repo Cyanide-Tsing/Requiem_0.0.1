@@ -1,0 +1,21 @@
+{
+  "key": "ostrum",
+  "category": "metal",
+  "primary": 7.0,
+  "secondary": 4.0,
+  "tertiary": 2.0,
+  "durability": 1531,
+  "integrityCost": 2,
+  "integrityGain": 7,
+  "magicCapacity": 104,
+  "toolLevel": "minecraft:netherite",
+  "toolEfficiency": 20,
+  "tints": {
+    "glyph": "8d0259",
+    "texture": "8d0259"
+  },
+  "effects": {},
+  "textures": [ "metal", "default" ],
+  "material": { "items": [ "ad_astra:ostrum_ingot" ] },
+  "requiredTools": { "hammer_dig": "minecraft:stone" }
+}

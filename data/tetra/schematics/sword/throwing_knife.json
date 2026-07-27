@@ -1,0 +1,206 @@
+{
+    "replace": true,
+    "slots": [
+        "sword/blade"
+    ],
+    "materialSlotCount": 1,
+    "rarity": "temporary",
+    "displayType": "major",
+    "glyph": {
+        "textureX": 160,
+        "textureY": 48
+    },
+    "requirement": {
+        "type": "tetra:locked",
+        "key": "tetra:sword/throwing_knife"
+    },
+    "translation": {
+        "primaryAttributes": {
+            "generic.attack_damage": 3
+        },
+        "secondaryEffects": {
+            "throwable": [
+                0,
+                1
+            ]
+        },
+        "tools": {
+            "cut": [
+                1,
+                3
+            ]
+        },
+        "durability": 2,
+        "integrity": -3,
+        "magicCapacity": 3
+    },
+    "outcomes": [
+        {
+            "materials": [
+                "tetra:wood/",
+                "tetra:stone/",
+                "tetra:bone/",
+                "tetra:gem"
+            ],
+            "countFactor": 2,
+            "moduleKey": "sword/throwing_knife",
+            "moduleVariant": "throwing_knife/"
+        },
+        {
+            "material": {
+                "items": [
+                    "kubejs:radium_ingot"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/throwing_knife",
+            "moduleVariant": "throwing_knife/radium",
+            "requiredTools": {
+                "hammer_dig": 3
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "kubejs:lead_ingot"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/throwing_knife",
+            "moduleVariant": "throwing_knife/lead",
+            "requiredTools": {
+                "hammer_dig": 2
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "kubejs:platinum_ingot"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/throwing_knife",
+            "moduleVariant": "throwing_knife/platinum",
+            "requiredTools": {
+                "hammer_dig": 3
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "kubejs:magnesium_ingot"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/throwing_knife",
+            "moduleVariant": "throwing_knife/magnesium",
+            "requiredTools": {
+                "hammer_dig": 2
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "minecraft:iron_ingot"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/throwing_knife",
+            "moduleVariant": "throwing_knife/iron",
+            "requiredTools": {
+                "hammer_dig": 2
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "minecraft:copper_ingot"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/throwing_knife",
+            "moduleVariant": "throwing_knife/copper",
+            "requiredTools": {
+                "hammer_dig": 2
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "minecraft:netherite_ingot"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/throwing_knife",
+            "moduleVariant": "throwing_knife/netherite",
+            "requiredTools": {
+                "hammer_dig": 4
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "iceandfire:silver_ingot"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/throwing_knife",
+            "moduleVariant": "throwing_knife/silver",
+            "requiredTools": {
+                "hammer_dig": 2
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "irons_spellbooks:arcane_ingot"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/throwing_knife",
+            "moduleVariant": "throwing_knife/arcane",
+            "requiredTools": {
+                "hammer_dig": 2
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "kubejs:uranium_ingot"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/throwing_knife",
+            "moduleVariant": "throwing_knife/uranium",
+            "requiredTools": {
+                "hammer_dig": 3
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "create:brass_ingot"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/throwing_knife",
+            "moduleVariant": "throwing_knife/brass",
+            "requiredTools": {
+                "hammer_dig": 3
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "kubejs:zinc_ingot"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/throwing_knife",
+            "moduleVariant": "throwing_knife/zinc",
+            "requiredTools": {
+                "hammer_dig": 3
+            }
+        }
+    ]
+}

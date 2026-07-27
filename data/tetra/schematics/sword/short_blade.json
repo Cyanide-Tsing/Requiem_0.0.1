@@ -1,0 +1,200 @@
+{
+    "replace": true,
+    "slots": [
+        "sword/blade"
+    ],
+    "materialSlotCount": 1,
+    "displayType": "major",
+    "glyph": {
+        "textureX": 32
+    },
+    "translation": {
+        "primaryAttributes": {
+            "generic.attack_damage": 3
+        },
+        "secondaryAttributes": {
+            "generic.attack_speed": -1
+        },
+        "secondaryEffects": {
+            "jab": -1
+        },
+        "tools": {
+            "cut": [
+                2,
+                3
+            ]
+        },
+        "durability": 4,
+        "integrity": -3,
+        "magicCapacity": 3
+    },
+    "outcomes": [
+        {
+            "materials": [
+                "tetra:wood/",
+                "tetra:stone/",
+                "tetra:bone/",
+                "tetra:gem"
+            ],
+            "countFactor": 2,
+            "moduleKey": "sword/short_blade",
+            "moduleVariant": "short_blade/"
+        },
+        {
+            "material": {
+                "items": [
+                    "kubejs:radium_ingot"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/short_blade",
+            "moduleVariant": "short_blade/radium",
+            "requiredTools": {
+                "hammer_dig": 3
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "kubejs:lead_ingot"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/short_blade",
+            "moduleVariant": "short_blade/lead",
+            "requiredTools": {
+                "hammer_dig": 2
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "kubejs:platinum_ingot"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/short_blade",
+            "moduleVariant": "short_blade/platinum",
+            "requiredTools": {
+                "hammer_dig": 3
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "kubejs:magnesium_ingot"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/short_blade",
+            "moduleVariant": "short_blade/magnesium",
+            "requiredTools": {
+                "hammer_dig": 2
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "minecraft:iron_ingot"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/short_blade",
+            "moduleVariant": "short_blade/iron",
+            "requiredTools": {
+                "hammer_dig": 2
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "minecraft:copper_ingot"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/short_blade",
+            "moduleVariant": "short_blade/copper",
+            "requiredTools": {
+                "hammer_dig": 2
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "minecraft:netherite_ingot"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/short_blade",
+            "moduleVariant": "short_blade/netherite",
+            "requiredTools": {
+                "hammer_dig": 4
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "iceandfire:silver_ingot"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/short_blade",
+            "moduleVariant": "short_blade/silver",
+            "requiredTools": {
+                "hammer_dig": 2
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "irons_spellbooks:arcane_ingot"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/short_blade",
+            "moduleVariant": "short_blade/arcane",
+            "requiredTools": {
+                "hammer_dig": 2
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "kubejs:uranium_ingot"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/short_blade",
+            "moduleVariant": "short_blade/uranium",
+            "requiredTools": {
+                "hammer_dig": 3
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "create:brass_ingot"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/short_blade",
+            "moduleVariant": "short_blade/brass",
+            "requiredTools": {
+                "hammer_dig": 3
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "kubejs:zinc_ingot"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/short_blade",
+            "moduleVariant": "short_blade/zinc",
+            "requiredTools": {
+                "hammer_dig": 3
+            }
+        }
+    ]
+}

@@ -1,0 +1,29 @@
+{
+  "key": "lacrima",
+  "category": "gem",
+  "primary": 5.3,
+  "secondary": 1.0,
+  "tertiary": 0.0,
+  "durability": 330,
+  "integrityCost": 1,
+  "integrityGain": 1,
+  "magicCapacity": 73,
+  "toolLevel": "minecraft:diamond",
+  "toolEfficiency": 5,
+  "tints": {
+    "glyph": "75d1ff",
+    "texture": "75d1ff"
+  },
+  "improvements": {
+      "arrested": 0
+  },
+  "attributes":{
+      "**irons_spellbooks:aqua_spell_power":0.25,
+      "**irons_spellbooks:aqua_magic_resistance":0.30,
+      "**irons_spellbooks:nature_magic_resistance":-0.15,
+      "**irons_spellbooks:ender_magic_resistance":-0.15
+  },
+  "textures": [ "gem", "default" ],
+  "material": { "items": [ "cataclysm:lacrima" ] },
+  "requiredTools": { "hammer_dig": "minecraft:iron" }
+}

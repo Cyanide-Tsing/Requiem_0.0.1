@@ -1,0 +1,23 @@
+{
+  "key": "jade",
+  "category": "gem",
+  "primary": 5.8,
+  "secondary": 2.5,
+  "tertiary": 0.0,
+  "durability": 850,
+  "integrityCost": 2,
+  "integrityGain": 2,
+  "magicCapacity": 122,
+  "toolLevel": "minecraft:diamond",
+  "toolEfficiency": 9,
+  "tints": {
+    "glyph": "4f8867",
+    "texture": "4f8867"
+  },
+  "improvements": {
+        "arrested": 0
+  },
+  "textures": [ "gem", "default" ],
+  "material": { "items": [ "goety:jade" ] },
+  "requiredTools": { "hammer_dig": "minecraft:iron" }
+}

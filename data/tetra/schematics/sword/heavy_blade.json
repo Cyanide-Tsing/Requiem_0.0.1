@@ -1,0 +1,195 @@
+{
+    "replace": true,
+    "slots": [
+        "sword/blade"
+    ],
+    "materialSlotCount": 1,
+    "displayType": "major",
+    "glyph": {
+        "textureX": 48
+    },
+    "translation": {
+        "primaryAttributes": {
+            "generic.attack_damage": 2
+        },
+        "secondaryAttributes": {
+            "generic.attack_damage": 1,
+            "generic.attack_speed": -1
+        },
+        "primaryEffects": {
+            "sweeping": 2
+        },
+        "durability": 3,
+        "integrity": -3,
+        "magicCapacity": 3
+    },
+    "outcomes": [
+        {
+            "materials": [
+                "tetra:wood/",
+                "tetra:stone/",
+                "tetra:bone/",
+                "tetra:gem"
+            ],
+            "countFactor": 2,
+            "moduleKey": "sword/heavy_blade",
+            "moduleVariant": "heavy_blade/"
+        },
+        {
+            "material": {
+                "items": [
+                    "kubejs:radium_ingot"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/heavy_blade",
+            "moduleVariant": "heavy_blade/radium",
+            "requiredTools": {
+                "hammer_dig": 3
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "kubejs:lead_ingot"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/heavy_blade",
+            "moduleVariant": "heavy_blade/lead",
+            "requiredTools": {
+                "hammer_dig": 2
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "kubejs:platinum_ingot"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/heavy_blade",
+            "moduleVariant": "heavy_blade/platinum",
+            "requiredTools": {
+                "hammer_dig": 3
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "kubejs:magnesium_ingot"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/heavy_blade",
+            "moduleVariant": "heavy_blade/magnesium",
+            "requiredTools": {
+                "hammer_dig": 2
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "minecraft:iron_ingot"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/heavy_blade",
+            "moduleVariant": "heavy_blade/iron",
+            "requiredTools": {
+                "hammer_dig": 2
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "minecraft:copper_ingot"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/heavy_blade",
+            "moduleVariant": "heavy_blade/copper",
+            "requiredTools": {
+                "hammer_dig": 2
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "minecraft:netherite_ingot"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/heavy_blade",
+            "moduleVariant": "heavy_blade/netherite",
+            "requiredTools": {
+                "hammer_dig": 4
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "iceandfire:silver_ingot"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/heavy_blade",
+            "moduleVariant": "heavy_blade/silver",
+            "requiredTools": {
+                "hammer_dig": 2
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "irons_spellbooks:arcane_ingot"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/heavy_blade",
+            "moduleVariant": "heavy_blade/arcane",
+            "requiredTools": {
+                "hammer_dig": 2
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "kubejs:uranium_ingot"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/heavy_blade",
+            "moduleVariant": "heavy_blade/uranium",
+            "requiredTools": {
+                "hammer_dig": 3
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "create:brass_ingot"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/heavy_blade",
+            "moduleVariant": "heavy_blade/brass",
+            "requiredTools": {
+                "hammer_dig": 3
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "kubejs:zinc_ingot"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/heavy_blade",
+            "moduleVariant": "heavy_blade/zinc",
+            "requiredTools": {
+                "hammer_dig": 3
+            }
+        }
+    ]
+}

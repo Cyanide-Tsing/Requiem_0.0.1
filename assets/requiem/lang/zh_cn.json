@@ -1,0 +1,35 @@
+{
+    "item.requiem.manual_of_brass":"黄铜指南书",
+    "item.requiem.enigmatic_tome":"神秘卷册",
+
+    "curios.identifier.manual":"机械师指南",
+    "curios.modifiers.manual":"携有机械师指南时：",
+    "curios.identifier.tome":"法典",
+    "curios.modifiers.tome":"携有法典时：",
+
+    "curios.identifier.page":"指南页",
+    "curios.modifiers.page":"携有指南页时：",
+    "curios.identifier.scroll":"书页",
+    "curios.modifiers.scroll":"携有书页时：",
+
+    "biome.requiem.andesite_highlands": "安山高地",
+    "biome.requiem.anthophyte_plains": "显花平原",
+    "biome.requiem.chalk_coast": "白垩海岸",
+    "biome.requiem.copper_delta": "酸蚀三角洲",
+    "biome.requiem.coral_coast": "珊瑚沙岸",
+    "biome.requiem.coral_sea": "珊瑚浅海",
+    "biome.requiem.cordaites_swamp": "科达树沼泽",
+    "biome.requiem.glacio_forest": "霜原密林",
+    "biome.requiem.loneliness_sea": "伶仃海",
+    "biome.requiem.magnetic_plateau": "磁场高原",
+    "biome.requiem.pangean_desert": "泛陆沙漠",
+    "biome.requiem.pelagic_ocean": "远洋",
+    "biome.requiem.pewen_forest": "南洋杉森林",
+    "biome.requiem.siberian_traps": "西伯利亚暗色岩区域",
+    "biome.requiem.sigillaria_forest": "封印木森林",
+    "biome.requiem.subterranean_ocean": "地心洋",
+    "biome.requiem.toxic_wasteland": "毒化废土",
+    "biome.requiem.volcanic_springs": "火山热泉",
+
+    "planet.requiem.paleomunda":"泛古星"
+}

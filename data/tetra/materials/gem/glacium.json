@@ -1,0 +1,41 @@
+{
+  "key": "glacium",
+  "category": "gem",
+  "primary": 6.5,
+  "secondary": 4.0,
+  "tertiary": 0.0,
+  "durability": 352,
+  "integrityCost": 1,
+  "integrityGain": 1,
+  "magicCapacity": 92,
+  "toolLevel": "minecraft:diamond",
+  "toolEfficiency": 5,
+  "effects": {},
+    "tints": {
+        "glyph": "79c5ff",
+        "texture": "79c5ff"
+    },
+    "attributes":{
+        "**irons_spellbooks:ice_spell_power":0.20,
+        "**irons_spellbooks:fire_spell_power":0.20,
+        "**irons_spellbooks:fire_magic_resistance":0.25,
+        "**irons_spellbooks:ice_magic_resistance":0.25,
+        "**irons_spellbooks:lightning_magic_resistance":-0.15,
+        "**irons_spellbooks:blood_magic_resistance":-0.15
+    },
+    "textures": [
+        "default"
+    ],
+    "experienceCost": 1,
+    "material": {
+        "items": [
+            "enlightened_end:glacium"
+        ]
+    },
+    "conditions": [
+        {
+            "type": "forge:mod_loaded",
+            "modid": "enlightened_end"
+        }
+    ]
+}

@@ -1,0 +1,14 @@
+{
+  "trigger": "tetra:apply_hit_effects",
+  "effect": "fire_aspect",
+  "outcome": {
+    "type": "tetra:apply_effect",
+    "effect": "kubejs:fire_aspect",
+    "entity": "target",
+    "source": "attacker",
+    "duration": 1,
+    "amplifier": 2,
+    "visible": true,
+    "showIcon": true
+  }
+}

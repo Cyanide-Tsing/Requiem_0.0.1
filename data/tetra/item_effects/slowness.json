@@ -1,0 +1,14 @@
+{
+  "trigger": "tetra:apply_hit_effects",
+  "effect": "slowness",
+  "outcome": {
+    "type": "tetra:apply_effect",
+    "effect": "minecraft:slowness",
+    "entity": "target",
+    "source": "attacker",
+    "duration": 120,
+    "amplifier": 3,
+    "visible": true,
+    "showIcon": true
+  }
+}

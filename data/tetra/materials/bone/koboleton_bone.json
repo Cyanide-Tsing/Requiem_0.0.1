@@ -1,0 +1,21 @@
+{
+  "key": "koboleton_bone",
+  "category": "bone",
+  "primary": 6.0,
+  "secondary": 1.3,
+  "tertiary": 6.5,
+  "durability": 191,
+  "integrityCost": 1,
+  "integrityGain": 6,
+  "magicCapacity": 162,
+  "toolLevel": "minecraft:diamond",
+  "toolEfficiency": 5.5,
+  "tints": {
+    "glyph": "b5a683",
+    "texture": "b5a683"
+  },
+  "effects": {},
+  "textures": [ "metal", "shiny" ],
+  "material": { "items": [ "cataclysm:koboleton_bone" ] },
+  "requiredTools": { "hammer_dig": "minecraft:iron" }
+}

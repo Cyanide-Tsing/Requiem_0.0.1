@@ -1,0 +1,24 @@
+{
+	"key": "bismuth",
+	"category": "metal",
+	"primary": 5.5,
+	"secondary": 4.0,
+	"tertiary": 1,
+	"durability": 188,
+	"integrityCost": 1,
+	"integrityGain": 6,
+	"magicCapacity": 144,
+	"toolLevel": "minecraft:gold",
+	"toolEfficiency": 13,
+	"tints": {
+		"glyph": "fff0e1",
+		"texture": "fff0e1"
+	},
+	"textures": ["shiny", "metal"],
+	"material": {
+		"items": ["enlightened_end:bismuth_ingot"]
+	},
+	"requiredTools": {
+		"hammer_dig": "minecraft:wood"
+	}
+}

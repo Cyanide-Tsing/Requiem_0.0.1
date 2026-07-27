@@ -1,0 +1,12 @@
+{
+    "conditions":[],
+    "entities":[
+        "minecraft:player"
+    ],
+    "slots":[
+        "tome",
+        "manual",
+        "page",
+        "scroll"
+    ]
+}

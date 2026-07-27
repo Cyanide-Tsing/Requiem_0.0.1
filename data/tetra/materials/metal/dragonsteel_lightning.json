@@ -1,0 +1,33 @@
+{
+  "key": "dragonsteel_lightning",
+  "category": "metal",
+  "primary": 11.0,
+  "secondary": 4.0,
+  "tertiary": 8.0,
+  "durability": 8000,
+  "integrityCost": 1,
+  "integrityGain": 8,
+  "magicCapacity": 144,
+  "toolLevel": "minecraft:netherite",
+  "toolEfficiency": 20,
+  "tints": {
+    "glyph": "6854ff",
+    "texture": "6854ff"
+  },
+  "effects": {
+    "charged":1
+  },
+  "textures": [ "metal", "default" ],
+  "material": { "items": [ "iceandfire:dragonsteel_lightning_ingot" ] },
+  "conditions": [
+        {
+            "type": "forge:mod_loaded",
+            "modid": "iceandfire"
+        }
+    ],
+  "requiredTools": { "hammer_dig": "minecraft:netherite" },
+  "attributes": {
+    "**irons_spellbooks:lightning_spell_power": 0.10,
+    "**irons_spellbooks:spell_resist": 0.15
+  }
+}

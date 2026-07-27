@@ -1,0 +1,14 @@
+{
+  "trigger": "tetra:apply_hit_effects",
+  "effect": "blazing_brand",
+  "outcome": {
+    "type": "tetra:apply_effect",
+    "effect": "ataclysm:blazing_brand",
+    "entity": "target",
+    "source": "attacker",
+    "duration": 120,
+    "amplifier": 2,
+    "visible": true,
+    "showIcon": true
+  }
+}

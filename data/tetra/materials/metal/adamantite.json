@@ -1,0 +1,23 @@
+{
+  "key": "adamantite",
+  "category": "metal",
+  "primary": 9.0,
+  "secondary": 6.8,
+  "tertiary": 1.5,
+  "durability": 1561,
+  "integrityCost": 1,
+  "integrityGain": 9,
+  "magicCapacity": 22,
+  "toolLevel": "minecraft:netherite",
+  "toolEfficiency": 16,
+  "tints": {
+    "glyph": "001bc7",
+    "texture": "001bc7"
+  },
+  "effects": {
+    "irradiation":1
+  },
+  "textures": [ "metal", "default" ],
+  "material": { "items": [ "enlightened_end:adamantite_ingot" ] },
+  "requiredTools": { "hammer_dig": "minecraft:iron" }
+}

@@ -1,0 +1,45 @@
+{
+    "key": "rose_quartz_socket",
+    "category": "socket",
+    "primary": 0,
+    "secondary": 0,
+    "tertiary": 0,
+    "durability": 0.0,
+    "integrityCost": 1,
+    "integrityGain": 0,
+    "magicCapacity": 0,
+    "toolLevel": 0,
+    "toolEfficiency": 0,
+    "effects": {},
+    "tints": {
+        "glyph": "d945a2",
+        "texture": "d945a2"
+    },
+    "attributes":{
+        "**irons_spellbooks:fire_magic_resistance":0.35,
+        "**irons_spellbooks:ice_magic_resistance":0.35,
+        "**irons_spellbooks:elderich_magic_resistance":0.65,
+        "**irons_spellbooks:ender_magic_resistance":0.35,
+        "**irons_spellbooks:nature_magic_resistance":0.35,
+        "**irons_spellbooks:holy_magic_resistance":0.35,
+        "**irons_spellbooks:lightning_magic_resistance":0.35,
+        "**irons_spellbooks:blood_magic_resistance":0.35,
+        "**irons_spellbooks:evocation_magic_resistance":0.35,
+        "**traveloptics:aqua_magic_resistance":0.35
+    },
+    "textures": [
+        "default"
+    ],
+    "experienceCost": 1,
+    "material": {
+        "items": [
+            "create:rose_quartz"
+        ]
+    },
+    "conditions": [
+        {
+            "type": "forge:mod_loaded",
+            "modid": "create"
+        }
+    ]
+}

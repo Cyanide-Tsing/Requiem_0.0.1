@@ -1,0 +1,21 @@
+{
+    "type":"minecraft:lake",
+    "config":{
+        "fluid":{
+            "type":"simple_state_provider",
+            "state":{
+                "Name":"vintageimprovements:sulfuric_acid",
+                "Properties":{
+                    "level":0
+                }
+            } 
+        },
+        "barrier":{
+            "type":"simple_state_provider",
+            "state":{
+                "Name":"ad_astra:venus_stone",
+                "Properties":{}
+            }
+        }
+    }
+}

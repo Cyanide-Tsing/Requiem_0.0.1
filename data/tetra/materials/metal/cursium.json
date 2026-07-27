@@ -1,0 +1,28 @@
+{
+  "key": "cursium",
+  "category": "metal",
+  "primary": 11.4,
+  "secondary": 5.5,
+  "tertiary": 4.5,
+  "durability": 2134,
+  "integrityCost": 2,
+  "integrityGain": 9,
+  "magicCapacity": 293,
+  "toolLevel": "minecraft:netherite",
+  "toolEfficiency": 11,
+  "tints": {
+    "glyph": "4fdfd4",
+    "texture": "4fdfd4"
+  },
+  "textures": [ "metal", "default" ],
+  "material": { "items": [ "cataclysm:cursium_ingot" ] },
+  "requiredTools": { "hammer_dig": "minecraft:diamond" },
+  "effects": {},
+  "attributes":{
+    "forge:entity_reach":1,
+    "**irons_spellbooks:ice_magic_resistance":0.15,
+    "**irons_spellbooks:ice_spells_power":0.25,
+    "**irons_spellbooks:blood_magic_resistance":0.15,
+    "**irons_spellbooks:holy_magic_resistance":-0.10
+  }
+}

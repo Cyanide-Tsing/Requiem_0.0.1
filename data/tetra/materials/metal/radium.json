@@ -1,0 +1,23 @@
+{
+  "key": "radium",
+  "category": "metal",
+  "primary": 7.2,
+  "secondary": 4.0,
+  "tertiary": 3.5,
+  "durability": 512,
+  "integrityCost": 1,
+  "integrityGain": 7,
+  "magicCapacity": 192,
+  "toolLevel": "minecraft:netherite",
+  "toolEfficiency": 11.0,
+  "tints": {
+    "glyph": "14ffd4",
+    "texture": "14ffd4"
+  },
+  "effects": {
+    "radium_irradiation":1
+  },
+  "textures": [ "metal", "shiny" ],
+  "material": { "items": [ "kubejs:radium_ingot" ] },
+  "requiredTools": { "hammer_dig": "minecraft:iron" }
+}

@@ -1,0 +1,18 @@
+{
+  "type": "tetra:conditioned",
+  "trigger": "tetra:apply_hit_effects",
+  "effect": "smite",
+  "condition": {
+      "type": "tetra:entity",
+      "entity": "target",
+      "condition": {
+        "type": "#requiem:undead"
+      }
+    },
+  "outcome": {
+    "type": "tetra:damage_entity",
+    "entity": "target",
+    "amount": 12.5,
+    "damageType": "minecraft:indirect_magic"
+  }
+}

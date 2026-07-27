@@ -1,0 +1,23 @@
+{
+  "key": "wither_bone",
+  "category": "bone",
+  "primary": 5.5,
+  "secondary": 1.9,
+  "tertiary": 4.5,
+  "durability": 180,
+  "integrityCost": 1,
+  "integrityGain": 7,
+  "magicCapacity": 144,
+  "toolLevel": "minecraft:netherite",
+  "toolEfficiency": 4.5,
+  "tints": {
+    "glyph": "5b5b5b",
+    "texture": "5b5b5b"
+  },
+  "effects": {
+    "wither":1
+  },
+  "textures": [ "metal", "shiny" ],
+  "material": { "items": [ "iceandfire:witherbone" ] },
+  "requiredTools": { "hammer_dig": "minecraft:iron" }
+}

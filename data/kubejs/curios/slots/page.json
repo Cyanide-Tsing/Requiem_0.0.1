@@ -1,0 +1,8 @@
+{
+  "size": 0,
+  "add_cosmetic": false,
+  "icon": "kubejs:slot/empty_page_slot",
+  "use_native_gui":true,
+  "replace":false,
+  "order":115
+}

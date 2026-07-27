@@ -1,0 +1,40 @@
+{
+    "key": "guano",
+    "category": "misc",
+    "primary": 2.0,
+    "secondary": 4,
+    "tertiary": 5.0,
+    "durability": 62,
+    "integrityCost": 2,
+    "integrityGain": 3,
+    "magicCapacity": 10,
+    "toolLevel": "minecraft:wood",
+    "toolEfficiency": 2.5,
+    "tints": {
+        "glyph": "422b00",
+        "texture": "422b00"
+    },
+    "textures": [
+        "default"
+    ],
+    "effects": {
+        "food_poison":1,
+        "wither":1,
+        "slowness":1,
+        "blinded":1
+    },
+    "material": {
+        "items": [
+            "alexscaves:guano"
+        ]
+    },
+    "requiredTools": {
+        "hammer_dig": "minecraft:stone"
+    },
+    "conditions": [
+        {
+            "type": "forge:mod_loaded",
+            "modid": "alexscaves"
+        }
+    ]
+}

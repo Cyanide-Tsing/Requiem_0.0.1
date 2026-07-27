@@ -1,0 +1,43 @@
+{
+    "key": "bloomberry",
+    "category": "socket",
+    "primary": 0,
+    "secondary": 0,
+    "tertiary": 0,
+    "durability": 0.0,
+    "integrityCost": 1,
+    "integrityGain": 0,
+    "magicCapacity": 0,
+    "toolLevel": 0,
+    "toolEfficiency": 0,
+    "effects": {
+        "blinded":1
+    },
+    "tints": {
+        "glyph": "bf02c3",
+        "texture": "bf02c3"
+    },
+    "attributes":{
+        "**irons_spellbooks:blood_spell_power":0.20,
+        "**irons_spellbooks:ender_spell_power":0.20,
+        "**irons_spellbooks:blood_magic_resistance":0.25,
+        "**irons_spellbooks:ender_magic_resistance":0.25,
+        "**irons_spellbooks:holy_magic_resistance":-0.45,
+        "**irons_spellbooks:nature_magic_resistance":-0.25
+    },
+    "textures": [
+        "default"
+    ],
+    "experienceCost": 1,
+    "material": {
+        "items": [
+            "biomancy:bloomberry"
+        ]
+    },
+    "conditions": [
+        {
+            "type": "forge:mod_loaded",
+            "modid": "biomancy"
+        }
+    ]
+}

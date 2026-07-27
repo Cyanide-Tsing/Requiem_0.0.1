@@ -1,0 +1,12 @@
+[
+    {
+        "key": "thermal_cell_action",
+        "requirement": {
+            "item": [ "tetra:thermal_cell" ]
+        },
+        "requiredTools": {
+            "hammer_dig": "minecraft:netherite"
+        },
+        "lootTable": "requiem:actions/thermal_cell"
+    }
+]

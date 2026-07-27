@@ -1,0 +1,39 @@
+{
+    "key": "circuit",
+    "category": "socket",
+    "primary": 0,
+    "secondary": 0,
+    "tertiary": 0,
+    "durability": 0.0,
+    "integrityCost": 1,
+    "integrityGain": 0,
+    "magicCapacity": 0,
+    "toolLevel": 0,
+    "toolEfficiency": 0,
+    "effects": {
+        "charged":1
+    },
+    "tints": {
+        "glyph": "000d63",
+        "texture": "000d63"
+    },
+    "attributes":{
+        "**irons_spellbooks:lightning_spell_power":0.15,
+        "**irons_spellbooks:lightning_magic_resistance":0.25
+    },
+    "textures": [
+        "default"
+    ],
+    "experienceCost": 1,
+    "material": {
+        "items": [
+            "kubejs:circuit"
+        ]
+    },
+    "conditions": [
+        {
+            "type": "forge:mod_loaded",
+            "modid": "kubejs"
+        }
+    ]
+}

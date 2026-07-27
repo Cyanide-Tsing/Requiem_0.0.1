@@ -1,0 +1,23 @@
+{
+  "key": "immortal_ingot",
+  "category": "metal",
+  "primary": 5.0,
+  "secondary": 4.5,
+  "tertiary": 1.5,
+  "durability": 300,
+  "integrityCost": 2,
+  "integrityGain": 6,
+  "magicCapacity": 31,
+  "toolLevel": "minecraft:netherite",
+  "toolEfficiency": 8,
+  "tints": {
+    "glyph": "414364",
+    "texture": "414364"
+  },
+  "effects": {
+    "erosion":1
+  },
+  "textures": [ "metal", "default" ],
+  "material": { "items": [ "eeeabsmobs:immortal_ingot" ] },
+  "requiredTools": { "hammer_dig": "minecraft:iron" }
+}

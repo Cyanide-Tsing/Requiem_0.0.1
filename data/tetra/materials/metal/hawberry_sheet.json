@@ -1,0 +1,23 @@
+{
+  "key": "hawberry_sheet",
+  "category": "metal",
+  "primary": 4.0,
+  "secondary": 1.0,
+  "tertiary": 10.0,
+  "durability": 141,
+  "integrityCost": 1,
+  "integrityGain": 2,
+  "magicCapacity": 21,
+  "toolLevel": "minecraft:wood",
+  "toolEfficiency": 3,
+  "tints": {
+    "glyph": "c73000",
+    "texture": "c73000"
+  },
+  "effects": {
+    "appetizing":1
+  },
+  "textures": [ "metal", "default" ],
+  "material": { "items": [ "fruitsdelight:hawberry_sheet" ] },
+  "requiredTools": { "hammer_dig": "minecraft:wood" }
+}

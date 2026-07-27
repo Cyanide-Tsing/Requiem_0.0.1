@@ -1,0 +1,20 @@
+{
+  "key": "platinum",
+  "category": "metal",
+  "primary": 6,
+  "secondary": 5.0,
+  "tertiary": 3.5,
+  "durability": 1024,
+  "integrityCost": 1,
+  "integrityGain": 7,
+  "magicCapacity": 256,
+  "toolLevel": "minecraft:diamond",
+  "toolEfficiency": 18.0,
+  "tints": {
+    "glyph": "d4efff",
+    "texture": "d4efff"
+  },
+  "textures": [ "metal", "default" ],
+  "material": { "items": [ "kubejs:platinum_ingot" ] },
+  "requiredTools": { "hammer_dig": "minecraft:iron" }
+}

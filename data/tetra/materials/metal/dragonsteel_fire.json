@@ -1,0 +1,34 @@
+{
+  "key": "dragonsteel_fire",
+  "category": "metal",
+  "primary": 11.0,
+  "secondary": 4.0,
+  "tertiary": 8.0,
+  "durability": 8000,
+  "integrityCost": 1,
+  "integrityGain": 8,
+  "magicCapacity": 144,
+  "toolLevel": "minecraft:netherite",
+  "toolEfficiency": 20,
+  "tints": {
+    "glyph": "ca8585",
+    "texture": "ca8585"
+  },
+  "effects": {
+    "fire_aspect":1
+  },
+  "textures": [ "metal", "default" ],
+  "material": { "items": [ "iceandfire:dragonsteel_fire_ingot" ] },
+  "conditions": [
+        {
+            "type": "forge:mod_loaded",
+            "modid": "iceandfire"
+        }
+    ],
+  "requiredTools": { "hammer_dig": "minecraft:netherite" },
+  "attributes": {
+    "**irons_spellbooks:fire_spell_power": 0.15,
+    "**irons_spellbooks:spell_resist": 0.15,
+    "**traveloptics:aqua_magic_resist": -0.10
+  }
+}

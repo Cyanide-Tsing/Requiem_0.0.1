@@ -1,0 +1,24 @@
+{
+  "key": "beryl_bronze",
+  "category": "metal",
+  "primary": 10.3,
+  "secondary": 3.3,
+  "tertiary": 2.0,
+  "durability": 750,
+  "integrityCost": 1,
+  "integrityGain": 8,
+  "magicCapacity": 72,
+  "toolLevel": "minecraft:netherite",
+  "toolEfficiency": 9.0,
+  "tints": {
+    "glyph": "873e3e",
+    "texture": "873e3e"
+  },
+  "effects": {
+    "workable":1,
+    "magnesea":1
+  },
+  "textures": [ "metal", "default" ],
+  "material": { "items": [ "kubejs:beryllium_copper_ingot" ] },
+  "requiredTools": { "hammer_dig": "minecraft:stone" }
+}

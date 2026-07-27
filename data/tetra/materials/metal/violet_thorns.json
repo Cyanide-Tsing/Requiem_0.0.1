@@ -1,0 +1,25 @@
+{
+  "key": "violet_thorns",
+  "hidden": true,
+  "category": "metal",
+  "primary": 9.0,
+  "secondary": 4.0,
+  "tertiary": 3.0,
+  "durability": 3200,
+  "integrityCost": 1,
+  "integrityGain": 6,
+  "magicCapacity": 72,
+  "toolLevel": "minecraft:netherite",
+  "toolEfficiency": 9.0,
+  "tints": {
+    "glyph": "d48cfc",
+    "texture": "d48cfc"
+  },
+  "effects": {},
+  "attributes": {
+    "**forge:entity_reach": 1
+  },
+  "textures": [ "metal", "default" ],
+  "material": { "items": [ "kubejs:twilight_thorn_blade" ] },
+  "requiredTools": { "hammer_dig": "minecraft:iron" }
+}

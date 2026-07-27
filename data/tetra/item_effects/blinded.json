@@ -1,0 +1,14 @@
+{
+  "trigger": "tetra:apply_hit_effects",
+  "effect": "blinded",
+  "outcome": {
+    "type": "tetra:apply_effect",
+    "effect": "minecraft:blindness",
+    "entity": "target",
+    "source": "attacker",
+    "duration": 120,
+    "amplifier": 1,
+    "visible": true,
+    "showIcon": true
+  }
+}

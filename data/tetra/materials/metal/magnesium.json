@@ -1,0 +1,23 @@
+{
+  "key": "magnesium",
+  "category": "metal",
+  "primary": 3.5,
+  "secondary": 0.5,
+  "tertiary": 7.0,
+  "durability": 256,
+  "integrityCost": 1,
+  "integrityGain": 5,
+  "magicCapacity": 108,
+  "toolLevel": "minecraft:iron",
+  "toolEfficiency": 7,
+  "tints": {
+    "glyph": "fad2f5",
+    "texture": "fad2f5"
+  },
+  "effects": {
+    "magnesea":1
+  },
+  "textures": [ "metal", "default" ],
+  "material": { "items": [ "kubejs:magnesium_ingot" ] },
+  "requiredTools": { "hammer_dig": "minecraft:stone" }
+}

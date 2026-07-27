@@ -1,0 +1,14 @@
+{
+  "trigger": "tetra:apply_hit_effects",
+  "effect": "ice_barrier",
+  "outcome": {
+    "type": "tetra:apply_effect",
+    "effect": "born_in_chaos_v1:ice_barrier",
+    "entity": "attacker",
+    "source": "attacker",
+    "duration": 1200,
+    "amplifier": 0,
+    "visible": true,
+    "showIcon": true
+  }
+}

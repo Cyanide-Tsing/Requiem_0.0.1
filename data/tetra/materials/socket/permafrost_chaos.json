@@ -1,0 +1,39 @@
+{
+    "key": "permafrost_chaos",
+    "category": "socket",
+    "primary": 0,
+    "secondary": 0,
+    "tertiary": 0,
+    "durability": 0.0,
+    "integrityCost": 1,
+    "integrityGain": 0,
+    "magicCapacity": 0,
+    "toolLevel": 0,
+    "toolEfficiency": 0,
+    "effects": {
+        "ice_barrier":1
+    },
+    "tints": {
+        "glyph": "e8f7ff",
+        "texture": "e8f7ff"
+    },
+    "attributes":{
+        "**irons_spellbooks:ice_spell_power":0.20,
+        "**irons_spellbooks:fire_magic_resistance":0.25
+    },
+    "textures": [
+        "default"
+    ],
+    "experienceCost": 1,
+    "material": {
+        "items": [
+            "born_in_chaos_v1:permafrost_shard"
+        ]
+    },
+    "conditions": [
+        {
+            "type": "forge:mod_loaded",
+            "modid": "born_in_chaos_v1"
+        }
+    ]
+}

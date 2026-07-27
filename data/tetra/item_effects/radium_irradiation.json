@@ -1,0 +1,14 @@
+{
+  "trigger": "tetra:apply_hit_effects",
+  "effect": "radium_irradiation",
+  "outcome": {
+    "type": "tetra:apply_effect",
+    "effect": "alexscaves:irradiated",
+    "entity": "target",
+    "source": "attacker",
+    "duration": 200,
+    "amplifier": 8,
+    "visible": true,
+    "showIcon": true
+  }
+}

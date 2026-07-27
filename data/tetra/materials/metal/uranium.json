@@ -1,0 +1,23 @@
+{
+  "key": "uranium",
+  "category": "metal",
+  "primary": 6.0,
+  "secondary": 5.0,
+  "tertiary": 2.0,
+  "durability": 1531,
+  "integrityCost": 1,
+  "integrityGain": 7,
+  "magicCapacity": 72,
+  "toolLevel": "minecraft:netherite",
+  "toolEfficiency": 12,
+  "tints": {
+    "glyph": "9da395",
+    "texture": "9da395"
+  },
+  "effects": {
+    "irradiation":1
+  },
+  "textures": [ "metal", "default" ],
+  "material": { "items": [ "kubejs:uranium_ingot" ] },
+  "requiredTools": { "hammer_dig": "minecraft:stone" }
+}

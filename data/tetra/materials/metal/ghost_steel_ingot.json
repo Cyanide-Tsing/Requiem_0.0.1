@@ -1,0 +1,21 @@
+{
+  "key": "ghost_steel_ingot",
+  "category": "metal",
+  "primary": 11.0,
+  "secondary": 7.8,
+  "tertiary": 0.8,
+  "durability": 16384,
+  "integrityCost": 3,
+  "integrityGain": 11,
+  "magicCapacity": 104,
+  "toolLevel": "minecraft:netherite",
+  "toolEfficiency": 10,
+  "tints": {
+    "glyph": "34367b",
+    "texture": "34367b"
+  },
+  "effects": {},
+  "textures": [ "metal", "default" ],
+  "material": { "items": [ "eeeabsmobs:ghost_steel_ingot" ] },
+  "requiredTools": { "hammer_dig": "minecraft:netherite" }
+}

@@ -1,0 +1,471 @@
+{
+    "replace": true,
+    "slots": [
+        "sword/blade"
+    ],
+    "materialSlotCount": 1,
+    "displayType": "major",
+    "translation": {
+        "primaryAttributes": {
+            "generic.attack_damage": 3
+        },
+        "durability": 4,
+        "integrity": -3,
+        "magicCapacity": 3
+    },
+    "outcomes": [
+        {
+            "materials": [
+                "tetra:wood/",
+                "tetra:stone/",
+                "tetra:bone/",
+                "tetra:gem/"
+            ],
+            "countFactor": 2,
+            "moduleKey": "sword/basic_blade",
+            "moduleVariant": "basic_blade/"
+        },
+        {
+            "material": {
+                "items": [
+                    "kubejs:radium_ingot"
+                ]
+            },
+            "countFactor": 2,
+            "moduleKey": "sword/basic_blade",
+            "moduleVariant": "basic_blade/radium",
+            "requiredTools": {
+                "hammer_dig": 3
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "kubejs:lead_ingot"
+                ]
+            },
+            "countFactor": 2,
+            "moduleKey": "sword/basic_blade",
+            "moduleVariant": "basic_blade/lead",
+            "requiredTools": {
+                "hammer_dig": 2
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "kubejs:platinum_ingot"
+                ]
+            },
+            "countFactor": 2,
+            "moduleKey": "sword/basic_blade",
+            "moduleVariant": "basic_blade/platinum",
+            "requiredTools": {
+                "hammer_dig": 3
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "kubejs:magnesium_ingot"
+                ]
+            },
+            "countFactor": 2,
+            "moduleKey": "sword/basic_blade",
+            "moduleVariant": "basic_blade/magnesium",
+            "requiredTools": {
+                "hammer_dig": 2
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "minecraft:iron_ingot"
+                ]
+            },
+            "countFactor": 2,
+            "moduleKey": "sword/basic_blade",
+            "moduleVariant": "basic_blade/iron",
+            "requiredTools": {
+                "hammer_dig": 2
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "minecraft:copper_ingot"
+                ]
+            },
+            "countFactor": 2,
+            "moduleKey": "sword/basic_blade",
+            "moduleVariant": "basic_blade/copper",
+            "requiredTools": {
+                "hammer_dig": 2
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "minecraft:netherite_ingot"
+                ]
+            },
+            "countFactor": 2,
+            "moduleKey": "sword/basic_blade",
+            "moduleVariant": "basic_blade/netherite",
+            "requiredTools": {
+                "hammer_dig": 4
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "iceandfire:silver_ingot"
+                ]
+            },
+            "countFactor": 2,
+            "moduleKey": "sword/basic_blade",
+            "moduleVariant": "basic_blade/silver",
+            "requiredTools": {
+                "hammer_dig": 2
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "irons_spellbooks:arcane_ingot"
+                ]
+            },
+            "countFactor": 2,
+            "moduleKey": "sword/basic_blade",
+            "moduleVariant": "basic_blade/arcane",
+            "requiredTools": {
+                "hammer_dig": 2
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "kubejs:uranium_ingot"
+                ]
+            },
+            "countFactor": 2,
+            "moduleKey": "sword/basic_blade",
+            "moduleVariant": "basic_blade/uranium",
+            "requiredTools": {
+                "hammer_dig": 3
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "create:brass_ingot"
+                ]
+            },
+            "countFactor": 2,
+            "moduleKey": "sword/basic_blade",
+            "moduleVariant": "basic_blade/create_brass",
+            "requiredTools": {
+                "hammer_dig": 3
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "create:zinc_ingot"
+                ]
+            },
+            "countFactor": 2,
+            "moduleKey": "sword/basic_blade",
+            "moduleVariant": "basic_blade/create_zinc",
+            "requiredTools": {
+                "hammer_dig": 3
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "createloveandwar:steel_ingot"
+                ]
+            },
+            "countFactor": 2,
+            "moduleKey": "sword/basic_blade",
+            "moduleVariant": "basic_blade/steel",
+            "requiredTools": {
+                "hammer_dig": 4
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "createloveandwar:tungsten_ingot"
+                ]
+            },
+            "countFactor": 2,
+            "moduleKey": "sword/basic_blade",
+            "moduleVariant": "basic_blade/tungsten",
+            "requiredTools": {
+                "hammer_dig": 4
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "kubejs:beryllium_copper_ingot"
+                ]
+            },
+            "countFactor": 2,
+            "moduleKey": "sword/basic_blade",
+            "moduleVariant": "basic_blade/beryl_bronze",
+            "requiredTools": {
+                "hammer_dig": 4
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "enlightened:bismuth_ingot"
+                ]
+            },
+            "countFactor": 2,
+            "moduleKey": "sword/basic_blade",
+            "moduleVariant": "basic_blade/bismuth",
+            "requiredTools": {
+                "hammer_dig": 2
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "iceandfire:dragonsteel_fire_ingot"
+                ]
+            },
+            "countFactor": 2,
+            "moduleKey": "sword/basic_blade",
+            "moduleVariant": "basic_blade/dragonsteel_fire",
+            "requiredTools": {
+                "hammer_dig": 6
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "iceandfire:dragonsteel_lightning_ingot"
+                ]
+            },
+            "countFactor": 2,
+            "moduleKey": "sword/basic_blade",
+            "moduleVariant": "basic_blade/dragonsteel_lightning",
+            "requiredTools": {
+                "hammer_dig": 6
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "iceandfire:dragonsteel_ice_ingot"
+                ]
+            },
+            "countFactor": 2,
+            "moduleKey": "sword/basic_blade",
+            "moduleVariant": "basic_blade/dragonsteel_ice",
+            "requiredTools": {
+                "hammer_dig": 6
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "kubejs:twilight_thorn_blade"
+                ]
+            },
+            "countFactor": 1,
+            "moduleKey": "sword/basic_blade",
+            "moduleVariant": "basic_blade/violet_thorns",
+            "requiredTools": {
+                "hammer_dig": 6
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "create:andesite_alloy"
+                ]
+            },
+            "countFactor": 2,
+            "moduleKey": "sword/basic_blade",
+            "moduleVariant": "basic_blade/create_andesite",
+            "requiredTools": {
+                "hammer_dig": 3
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "enlightened_end:adamantite_ingot"
+                ]
+            },
+            "countFactor": 2,
+            "moduleKey": "sword/basic_blade",
+            "moduleVariant": "basic_blade/adamantite",
+            "requiredTools": {
+                "hammer_dig": 6
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "fruitsdelight:hawberry_sheet"
+                ]
+            },
+            "countFactor": 2,
+            "moduleKey": "sword/basic_blade",
+            "moduleVariant": "basic_blade/hawberry_sheet",
+            "requiredTools": {
+                "hammer_dig": 1
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "eeeabsmobs:immortal_ingot"
+                ]
+            },
+            "countFactor": 2,
+            "moduleKey": "sword/basic_blade",
+            "moduleVariant": "basic_blade/immortal_ingot",
+            "requiredTools": {
+                "hammer_dig": 5
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "eeeabsmobs:ghost_steel_ingot"
+                ]
+            },
+            "countFactor": 2,
+            "moduleKey": "sword/basic_blade",
+            "moduleVariant": "basic_blade/ghost_steel_ingot",
+            "requiredTools": {
+                "hammer_dig": 6
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "cataclysm:ancient_metal_ingot"
+                ]
+            },
+            "countFactor": 2,
+            "moduleKey": "sword/basic_blade",
+            "moduleVariant": "basic_blade/ancient_metal",
+            "requiredTools": {
+                "hammer_dig": 3
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "cataclysm:black_steel_ingot"
+                ]
+            },
+            "countFactor": 2,
+            "moduleKey": "sword/basic_blade",
+            "moduleVariant": "basic_blade/black_steel",
+            "requiredTools": {
+                "hammer_dig": 3
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "cataclysm:witherite_ingot"
+                ]
+            },
+            "countFactor": 2,
+            "moduleKey": "sword/basic_blade",
+            "moduleVariant": "basic_blade/witherite",
+            "requiredTools": {
+                "hammer_dig": 6
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "cataclysm:ignitium_ingot"
+                ]
+            },
+            "countFactor": 2,
+            "moduleKey": "sword/basic_blade",
+            "moduleVariant": "basic_blade/ignitium",
+            "requiredTools": {
+                "hammer_dig": 6
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "cataclysm:cursium_ingot"
+                ]
+            },
+            "countFactor": 2,
+            "moduleKey": "sword/basic_blade",
+            "moduleVariant": "basic_blade/cursium",
+            "requiredTools": {
+                "hammer_dig": 6
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "ad_astra:desh_ingot"
+                ]
+            },
+            "countFactor": 2,
+            "moduleKey": "sword/basic_blade",
+            "moduleVariant": "basic_blade/desh",
+            "requiredTools": {
+                "hammer_dig": 3
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "ad_astra:ostrum_ingot"
+                ]
+            },
+            "countFactor": 2,
+            "moduleKey": "sword/basic_blade",
+            "moduleVariant": "basic_blade/ostrum",
+            "requiredTools": {
+                "hammer_dig": 4
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "ad_astra:calorite_ingot"
+                ]
+            },
+            "countFactor": 2,
+            "moduleKey": "sword/basic_blade",
+            "moduleVariant": "basic_blade/calorite",
+            "requiredTools": {
+                "hammer_dig": 5
+            }
+        },
+        {
+            "material": {
+                "items": [
+                    "born_in_chaos:dark_metal"
+                ]
+            },
+            "countFactor": 2,
+            "moduleKey": "sword/basic_blade",
+            "moduleVariant": "basic_blade/dark_metal",
+            "requiredTools": {
+                "hammer_dig": 4
+            }
+        }
+    ]
+}

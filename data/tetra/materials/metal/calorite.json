@@ -1,0 +1,21 @@
+{
+  "key": "calorite",
+  "category": "metal",
+  "primary": 11.0,
+  "secondary": 3.0,
+  "tertiary": 4.0,
+  "durability": 2031,
+  "integrityCost": 2,
+  "integrityGain": 8,
+  "magicCapacity": 104,
+  "toolLevel": "minecraft:netherite",
+  "toolEfficiency": 16,
+  "tints": {
+    "glyph": "ce0000",
+    "texture": "ce0000"
+  },
+  "effects": {},
+  "textures": [ "metal", "default" ],
+  "material": { "items": [ "ad_astra:calorite_ingot" ] },
+  "requiredTools": { "hammer_dig": "minecraft:stone" }
+}

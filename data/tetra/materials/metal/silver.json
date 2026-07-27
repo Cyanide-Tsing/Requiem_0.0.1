@@ -1,0 +1,29 @@
+{
+  "key": "silver",
+  "category": "metal",
+  "primary": 3.0,
+  "secondary": 4.0,
+  "tertiary": 1.5,
+  "durability": 196,
+  "integrityCost": 1,
+  "integrityGain": 4,
+  "magicCapacity": 202,
+  "toolLevel": "minecraft:iron",
+  "toolEfficiency": 14,
+  "tints": {
+    "glyph": "d4f5ff",
+    "texture": "d4f5ff"
+  },
+  "textures": [ "metal", "default" ],
+  "material": { "items": [ "iceandfire:silver_ingot" ] },
+  "requiredTools": { "hammer_dig": "minecraft:stone" },
+  "effects": {
+    "smite":3
+  },
+  "conditions": [
+        {
+            "type": "forge:mod_loaded",
+            "modid": "iceandfire"
+        }
+    ]
+}

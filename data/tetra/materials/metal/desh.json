@@ -1,0 +1,21 @@
+{
+  "key": "desh",
+  "category": "metal",
+  "primary": 5.0,
+  "secondary": 4.0,
+  "tertiary": 5.0,
+  "durability": 250,
+  "integrityCost": 2,
+  "integrityGain": 6,
+  "magicCapacity": 104,
+  "toolLevel": "minecraft:diamond",
+  "toolEfficiency": 9,
+  "tints": {
+    "glyph": "b28a47",
+    "texture": "b28a47"
+  },
+  "effects": {},
+  "textures": [ "metal", "default" ],
+  "material": { "items": [ "ad_astra:desh_ingot" ] },
+  "requiredTools": { "hammer_dig": "minecraft:stone" }
+}

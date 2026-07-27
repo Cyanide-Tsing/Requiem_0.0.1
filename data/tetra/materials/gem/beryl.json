@@ -1,0 +1,23 @@
+{
+  "key": "beryl",
+  "category": "gem",
+  "primary": 5.5,
+  "secondary": 1.2,
+  "tertiary": 0.0,
+  "durability": 850,
+  "integrityCost": 1,
+  "integrityGain": 1,
+  "magicCapacity": 252,
+  "toolLevel": "minecraft:diamond",
+  "toolEfficiency": 7,
+  "tints": {
+    "glyph": "a1baff",
+    "texture": "a1baff"
+  },
+  "effects": {
+    "magnesea":1
+  },
+  "textures": [ "gem", "default" ],
+  "material": { "items": [ "kubejs:berylium_crystaline" ] },
+  "requiredTools": { "hammer_dig": "minecraft:iron" }
+}
