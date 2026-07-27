@@ -138,6 +138,7 @@ const STURDY = [
     '2x createbigcannons:basin_foundry_lid',
     '2x ratatouille:oven',
     '2x minecraft:cauldron',
+    'ratatouille:compost_tower',
     'createmetallurgy:foundry_basin',
     'createmetallurgy:casting_basin',
     'createmetallurgy:casting_table',
