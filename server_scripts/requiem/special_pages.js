@@ -52,8 +52,9 @@ const specialPageEffects = {
         let page = findCurioPage(player, "requiem:page_of_infused_magnet")
         if (!page?.nbt || page.nbt.getInt("energy") <= 0 || player.getCooldowns().isOnCooldown(page)) return;
         level.runCommandSilent(`particle cataclysm:em_pulse ${player.x} ${player.y+1} ${player.z}`)
-        level.runCommandSilent(`particle alexscaves:scarlet_shield_lightning ${player.x} ${player.y+1} ${player.z} 1 1 1 0 1 normal`)
-        level.runCommandSilent(`particle alexscaves:azure_shield_lightning ${player.x} ${player.y+1} ${player.z} -1 1 -1 0 1 normal`)
+        for(let i=0; i<5; i++){
+            level.runCommandSilent(`particle alexscaves:magnet_lightning ${player.x} ${player.y+1} ${player.z} 0 0 0 0 1 normal`)
+        }
         player.addItemCooldown(page, 40)
         let energy = page.nbt.getInt("energy")
         page.nbt.putInt("energy", energy-1)

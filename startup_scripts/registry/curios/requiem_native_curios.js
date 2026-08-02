@@ -152,7 +152,6 @@ StartupEvents.registry('item', event=>{
             .canEquip((slotcontext, stack) => true)
             .canUnequip((slotcontext, stack) => true)
             .canDrop((slotContext, source, lootingLevel, recentlyHit, stack) => false)
-            .canWalkOnPowderedSnow((slotcontext, stack) => true)
             .onEquip((slotContext, oldStack, newStack) => {
                 let player = slotContext.entity()
                 if(newStack?.nbt && newStack.nbt.contains('energy'))
