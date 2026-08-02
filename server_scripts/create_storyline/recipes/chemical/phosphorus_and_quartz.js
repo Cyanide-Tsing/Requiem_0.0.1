@@ -31,11 +31,11 @@ ServerEvents.recipes(event=>{
     event.remove({id:"create:crafting/materials/rose_quartz"})
     event.remove({id:"spelunkery:rose_quartz"})
 
-    event.recipes.create.mixing("create:rose_quartz", ["refinedstorage:silicon", "4x minecraft:redstone"]).heated().id("create:mixing/rose_quartz")
-    event.recipes.vintageimprovements.pressurizing(["create:rose_quartz"], ["refinedstorage:silicon", "minecraft:redstone"]).heated().id("requiem:pressurizing/rose_quartz")
+    event.recipes.create.mixing("create:rose_quartz", ["kubejs:silicon", "4x minecraft:redstone"]).heated().id("create:mixing/rose_quartz")
+    event.recipes.vintageimprovements.pressurizing(["create:rose_quartz"], ["kubejs:silicon", "minecraft:redstone"]).heated().id("requiem:pressurizing/rose_quartz")
 
-    event.recipes.create.mixing("kubejs:glistening_quartz", ["refinedstorage:silicon", "4x minecraft:glowstone_dust"]).heated().id("requiem:mixing/glitening_quartz")
-    event.recipes.vintageimprovements.pressurizing(["kubejs:glistening_quartz"], ["refinedstorage:silicon", "minecraft:glowstone_dust"]).heated().id("requiem:pressurizing/glistening_quartz")
+    event.recipes.create.mixing("kubejs:glistening_quartz", ["kubejs:silicon", "4x minecraft:glowstone_dust"]).heated().id("requiem:mixing/glitening_quartz")
+    event.recipes.vintageimprovements.pressurizing(["kubejs:glistening_quartz"], ["kubejs:silicon", "minecraft:glowstone_dust"]).heated().id("requiem:pressurizing/glistening_quartz")
 
     event.remove({id:"createmetallurgy:crafting/content/mechanical_belt_grinder"})
     event.remove({id:"createmetallurgy:crafting/materials/sandpaper_belt"})

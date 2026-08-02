@@ -177,9 +177,75 @@ StartupEvents.registry('item', event=>{
             })
          )
          .barWidth(itemStack=>{
-            if(itemStack?.nbt) return itemStack.nbt.contains('energy') ? itemStack.nbt.getInt('energy') / 1401 : 0;
+            if(itemStack?.nbt) return itemStack.nbt.contains('energy') ? itemStack.nbt.getInt('energy') / 1500 : 0;
             else return 0
          })
          .barColor(itemStack=>Color.AQUA)
-         .tag("curios:page")
+          .tag("curios:page")
+
+    event.create('requiem:page_of_radioactivity')
+           .maxStackSize(1)
+           .attachCuriosCapability(
+             CuriosJSCapabilityBuilder.create()
+             .canEquip((slotcontext, stack) => true)
+             .canUnequip((slotcontext, stack) => true)
+             .canDrop((slotContext, source, lootingLevel, recentlyHit, stack) => false)
+             .onEquip((slotContext, oldStack, newStack) => {})
+             .onUnequip((slotContext, oldStack, newStack) => {})
+             .curioTick((slotContext, stack) => {
+                 if (!stack.nbt) return
+                 if (!stack.nbt.contains('energy')) stack.nbt.putInt('energy', 16)
+                 if (slotContext.entity().age % 100 === 0) {
+                     stack.nbt.putInt('energy', Math.min(16, stack.nbt.getInt('energy') + 1))
+                 }
+             })
+          )
+          .barWidth(itemStack => {
+            if(itemStack?.nbt) return itemStack.nbt.contains('energy') ? Math.floor(itemStack.nbt.getInt('energy') / 1.2) : 0;
+            else return 0
+          })
+          .barColor(itemStack => Color.of(0x39FF14))
+          .tag('curios:page')
+
+    event.create('requiem:page_of_infused_magnet')
+           .maxStackSize(1)
+           .attachCuriosCapability(
+             CuriosJSCapabilityBuilder.create()
+             .canEquip((slotcontext, stack) => true)
+             .canUnequip((slotcontext, stack) => true)
+             .canDrop((slotContext, source, lootingLevel, recentlyHit, stack) => false)
+             .onEquip((slotContext, oldStack, newStack) => {})
+             .onUnequip((slotContext, oldStack, newStack) => {})
+             .curioTick((slotContext, stack) => {
+                 if (!stack.nbt) return
+                 if (!stack.nbt.contains('energy')) stack.nbt.putInt('energy', 16)
+                 if (slotContext.entity().age % 100 === 0) {
+                     stack.nbt.putInt('energy', Math.min(16, stack.nbt.getInt('energy') + 1))
+                 }
+             })
+          )
+          .barWidth(itemStack => {
+            if(itemStack?.nbt) return itemStack.nbt.contains('energy') ? Math.floor(itemStack.nbt.getInt('energy') / 1.2) : 0;
+            else return 0
+          })
+          .barColor(itemStack => {
+            if(itemStack?.nbt && itemStack.nbt.contains('energy')){
+                let energy = itemStack.nbt.getInt('energy')
+                return Color.rgba(240-energy*15, 0, 15*energy,0)
+            }
+            else return Color.of(0xffffff)})
+          .tag('curios:page')
+
+          event.create('requiem:page_of_vitality')
+           .maxStackSize(1)
+           .attachCuriosCapability(
+             CuriosJSCapabilityBuilder.create()
+             .canEquip((slotcontext, stack) => true)
+             .canUnequip((slotcontext, stack) => true)
+             .canDrop((slotContext, source, lootingLevel, recentlyHit, stack) => false)
+             .onEquip((slotContext, oldStack, newStack) => {})
+             .onUnequip((slotContext, oldStack, newStack) => {})
+             .curioTick((slotContext, stack) => {})
+          )
+          .tag('curios:page')
 })

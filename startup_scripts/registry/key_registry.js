@@ -6,7 +6,7 @@ const $KeyMappingRegistry = Java.loadClass(
  
 global.prevKey = new $KeyMapping(
   "key.keybinding.word_preview",
-  $GLFWkey.GLFW_KEY_J,
+  $GLFWkey.GLFW_KEY_R,
   "key.kubejs.requiem_native"
 );
 

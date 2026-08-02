@@ -37,6 +37,7 @@ StartupEvents.registry('item', event => {
     event.create('universal_redstone_machinery')
     event.create('glistening_quartz')
     event.create('polished_glistening_quartz')
+    event.create('silicon')
 })
 
 //Create Electricity

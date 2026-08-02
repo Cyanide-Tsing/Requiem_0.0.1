@@ -179,6 +179,53 @@ ServerEvents.recipes(event=>{
             }
         ]
     }).id('requiem:bulk_fermenting/ethanol')
+
+    //mass prod of acetic acid
+    event.custom({
+        "type": "createdieselgenerators:basin_fermenting",
+        "ingredients": [
+            {
+                "fluid": "createdieselgenerators:ethanol",
+                "amount": 500
+            },
+            {
+                "item": "vintagedelight:organic_mash"
+            }
+        ],
+        "processingTime": 400,
+        "results": [
+            {
+                "fluid": "kubejs:acetic_acid",
+                "amount": 500
+            },
+            {
+                "item": "vintagedelight:organic_mash"
+            }
+        ]
+    }).id('requiem:basin_fermenting/acetic_acid')
+
+    event.custom({
+        "type": "createdieselgenerators:bulk_fermenting",
+        "ingredients": [
+            {
+                "fluid": "createdieselgenerators:ethanol",
+                "amount": 500
+            },
+            {
+                "item": "vintagedelight:organic_mash"
+            }
+        ],
+        "processingTime": 200,
+        "results": [
+            {
+                "fluid": "kubejs:acetic_acid",
+                "amount": 500
+            },
+            {
+                "item": "vintagedelight:organic_mash"
+            }
+        ]
+    }).id('requiem:bulk_fermenting/acetic_acid')
 })
 
 ServerEvents.tags('item', event=>{

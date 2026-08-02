@@ -385,6 +385,7 @@
   "kubejs.casting.nextpage":"§e笔记翻到了：§r",
   "kubejs.untitled":"<未命名>",
   "ui.kubejs.wordcard.reveals":"OIIA",
+  "ui.kubejs.energy":"能量",
 
   "fluid_type.hotbath.hot_water_fluid_type": "热水",
   "block.hotbath.hot_water_block": "热水"
