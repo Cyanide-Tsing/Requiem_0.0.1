@@ -1,4 +1,4 @@
-const EMP_RADIUS = 5
+const EMP_RADIUS = 7
 const RAD_RADIUS = 3
 
 function findCurioPage(player, itemId) {
@@ -8,6 +8,28 @@ function findCurioPage(player, itemId) {
 }
 
 const specialPageEffects = {
+    /**
+     * @param {Internal.Level} level
+     * @param {Internal.Player} player
+     */
+    'requiem:page_of_spelunkery': function (level, player) {
+        let page = findCurioPage(player, "requiem:page_of_spelunkery")
+        if (player.getCooldowns().isOnCooldown(page)) return;
+        for(let i=0; i<16; i++){
+            level.runCommandSilent(`particle minecraft:dust ${player.x + 4*Math.random() - 2} ${player.y+1} ${player.z + 4*Math.random() - 2}`)
+        }
+        if(player.potionEffects.isActive("minecraft:haste")){
+            level.getEntitiesWithin(AABB.of(player.x - 10, player.y - 10, player.z - 10, player.x + 10, player.y + 10, player.z + 10)).forEach(entity=>{
+                entity.potionEffects.add("glowing", 100, 0, false, false)
+            })
+            player.addItemCooldown(page, 100)
+        }
+        else{
+            player.potionEffects.add("minecraft:haste", 1000, 1, false, false)
+            player.addItemCooldown(page, 1200)
+        }
+        
+    },
     'requiem:page_of_vitality': function (level, player) {
         let page = findCurioPage(player, "requiem:page_of_vitality")
         if (player.getCooldowns().isOnCooldown(page)) return;
@@ -15,6 +37,35 @@ const specialPageEffects = {
             level.runCommandSilent(`particle minecraft:heart ${player.x + 2*Math.random() - 1} ${player.y+1} ${player.z + 2*Math.random() - 1}`)
         }
         player.heal(5)
+        player.addItemCooldown(page, 400)
+    },
+    /**
+     * @param {Internal.Level} level
+     * @param {Internal.Player} player
+     */
+    'requiem:page_of_charged': function (level, player) {
+        let page = findCurioPage(player, "requiem:page_of_charged")
+        if (!page?.nbt || page.nbt.getInt("energy") <= 150 || player.getCooldowns().isOnCooldown(page)) return;
+        level.runCommandSilent(`particle cataclysm:lightning_explode ${player.x} ${player.y+1} ${player.z}`)
+        let energy = page.nbt.getInt("energy")
+        page.nbt.putInt("energy", energy-100)
+        player.setDeltaMovement(player.getLookAngle().scale(5))
+        player.hurtMarked = true
+        player.addItemCooldown(page, 100)
+        level.server.scheduleInTicks(5, () => {
+            player.runCommandSilent('particle cataclysm:lightning_explode ~ ~1 ~')
+            let ACC = level.createEntity("cataclysm:accretion")
+            ACC.setPos(player.x, player.y, player.z)
+            ACC.spawn()
+        })
+    },
+    'requiem:page_of_surging_health': function (level, player) {
+        let page = findCurioPage(player, "requiem:page_of_surging_health")
+        if (player.getCooldowns().isOnCooldown(page)) return;
+        for(let i=0; i<10; i++){
+            level.runCommandSilent(`particle minecraft:heart ${player.x + 4*Math.random() - 2} ${player.y+1} ${player.z + 4*Math.random() - 2}`)
+        }
+        player.heal(8)
         player.addItemCooldown(page, 200)
     },
     /**
@@ -24,6 +75,9 @@ const specialPageEffects = {
     'requiem:page_of_radioactivity': function (level, player) {
         let page = findCurioPage(player, "requiem:page_of_radioactivity")
         if (!page?.nbt || page.nbt.getInt("energy") <= 0 || player.getCooldowns().isOnCooldown(page)) return;
+        let ACC = level.createEntity("cataclysm:accretion")
+        ACC.setPos(player.x, player.y, player.z)
+        ACC.spawn()
         for(let i=0; i<10; i++){
             level.runCommandSilent(`particle alexscaves:blue_raygun_explosion ${player.x + 4*Math.random() - 2} ${player.y + 0.5} ${player.z + 4*Math.random() - 2}`)
             level.runCommandSilent(`particle alexscaves:raygun_explosion ${player.x + 6*Math.random() - 3} ${player.y + 0.5} ${player.z + 6*Math.random() - 3}`)
@@ -33,12 +87,10 @@ const specialPageEffects = {
         player.addItemCooldown(page, 40)
         let energy = page.nbt.getInt("energy")
         page.nbt.putInt("energy", energy-1)
-        level.getEntities().forEach(target => {
+        let aabb = AABB.of(player.x - RAD_RADIUS, player.y - RAD_RADIUS, player.z - RAD_RADIUS,
+                           player.x + RAD_RADIUS, player.y + RAD_RADIUS, player.z + RAD_RADIUS)
+        level.getEntitiesWithin(aabb).forEach(target => {
             if (!target || target.uuid === player.uuid || !target.isLiving()) return
-            let dx = target.x - player.x
-            let dy = target.y - player.y
-            let dz = target.z - player.z
-            if (dx * dx + dy * dy + dz * dz > RAD_RADIUS * RAD_RADIUS) return
 
             target.potionEffects.add('alexscaves:irradiated', 100, 4, false, false)
             target.attack(level.damageSources().explosion(target, player), 15)
@@ -52,22 +104,23 @@ const specialPageEffects = {
         let page = findCurioPage(player, "requiem:page_of_infused_magnet")
         if (!page?.nbt || page.nbt.getInt("energy") <= 0 || player.getCooldowns().isOnCooldown(page)) return;
         level.runCommandSilent(`particle cataclysm:em_pulse ${player.x} ${player.y+1} ${player.z}`)
+        let ACC = level.createEntity("cataclysm:accretion")
+        ACC.setPos(player.x, player.y, player.z)
+        ACC.spawn()
         for(let i=0; i<5; i++){
             level.runCommandSilent(`particle alexscaves:magnet_lightning ${player.x} ${player.y+1} ${player.z} 0 0 0 0 1 normal`)
         }
         player.addItemCooldown(page, 40)
         let energy = page.nbt.getInt("energy")
         page.nbt.putInt("energy", energy-1)
-        level.getEntities().forEach(target => {
+        let aabb = AABB.of(player.x - EMP_RADIUS, player.y - EMP_RADIUS, player.z - EMP_RADIUS,
+                           player.x + EMP_RADIUS, player.y + EMP_RADIUS, player.z + EMP_RADIUS)
+        level.getEntitiesWithin(aabb).forEach(target => {
             if (!target || target.uuid === player.uuid || !target.isLiving()) return
-            let dx = target.x - player.x
-            let dy = target.y - player.y
-            let dz = target.z - player.z
-            if (dx * dx + dy * dy + dz * dz > EMP_RADIUS * EMP_RADIUS) return
 
             target.potionEffects.add('alexscaves:stunned', 60, 0, false, false)
             target.attack(level.damageSources().playerAttack(player), 1)
-            target.attack(level.damageSources().lightningBolt(), 10)
+            target.attack(level.damageSources().lightningBolt(), 15)
         })
     }
 }
