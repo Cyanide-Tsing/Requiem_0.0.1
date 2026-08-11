@@ -66,4 +66,58 @@ StartupEvents.registry('entity_type', event => {
             }
             if(shouldRm)entity.remove();
         })
+
+        event.create('alpha_particle', 'entityjs:projectile')
+            .sized(0.60, 0.60)
+            .canCollideWith((ctx) => {return true})
+            .canBeCollidedWith((ctx) => {return true})
+            .canSpawnFarFromPlayer(true)
+            .clientTrackingRange(64)
+            .isPushable(true)
+            .isFlapping(entity=>{return true})
+            .mobCategory('misc')
+            .updateInterval(3)
+            .onHitBlock(context => {
+                const { entity, result } = context
+                global.onHitBehavior(entity, result.block)
+            })
+            .shouldRenderAtSqrDistance(context => {
+                const { entity, distanceToPlayer } = context;
+                return distanceToPlayer < 127;
+            })
+            .onHitEntity(context => {
+                const { entity, result } = context
+                if (result.entity.living) {
+                    result.entity.attack(entity.level.damageSources().lightningBolt(), 4)
+                    result.entity.potionEffects.add('alexscaves:irradiated', 200, 4, false, true)
+                }
+                entity.remove('discarded')
+            })
+            .tag("alexscaves:ferromagnetic_entities")
 })
+
+EntityJSEvents.modifyEntity(event => {
+    event.modify('kubejs:alpha_particle', builder => {
+        builder.onAddedToWorld(entity => {
+            entity.setNoGravity(true)
+        })
+    })
+})
+/**
+ * 
+ * @param {Internal.Entity} entity 
+ * @param {Internal.Block} result 
+ */
+
+global.onHitBehavior = (entity, result) =>{
+    let block = entity.level.getBlockState(result.blockPos)
+    let speed = entity.getDeltaMovement().length()
+    let output = global.findCyclotronResult(entity.level, block, speed)
+    if (output) {
+        let block = entity.level.getBlock(result.blockPos)
+        block.set('minecraft:air')
+        block.popItem(output)
+    }
+    entity.level.createExplosion(entity.x, entity.y, entity.z).strength(1).explode()
+    entity.remove('discarded')
+}

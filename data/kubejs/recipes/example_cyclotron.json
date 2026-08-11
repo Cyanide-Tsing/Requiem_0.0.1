@@ -1,0 +1,6 @@
+{
+    "type": "kubejs:cyclotron",
+    "ingredient": { "item": "minecraft:stone" },
+    "result": { "item": "minecraft:cobblestone", "count": 1 },
+    "min_speed": 0.3
+}

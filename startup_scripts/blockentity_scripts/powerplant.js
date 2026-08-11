@@ -38,6 +38,11 @@ global.doEnergy = (level, x, y, z) =>{
     alterCoolingAround(level, x, y, z, fuel);
     alterFuelAround(level, x, y, z);
     explosionIfHydrogen(level, x, y, z);
+    if (Math.random() < 0.15) {
+        let particle = level.createEntity('kubejs:alpha_particle')
+        particle.setPosition(x-0.5+2*Math.random(), y-0.5+2*Math.random(), z-0.5+2*Math.random())
+        particle.spawn()
+    }
 }
 
 function checkUraniumAround(level, x, y, z){
