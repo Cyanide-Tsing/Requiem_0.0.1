@@ -24,6 +24,7 @@ StartupEvents.registry('item', event => {
     event.create('radium_sulphate_crystal');
     event.create('radium_nugget');
     event.create('radium_ingot');
+    event.create('thorium_ingot');
 })
 
 //Create Components

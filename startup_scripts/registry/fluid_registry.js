@@ -13,6 +13,7 @@ StartupEvents.registry('fluid', event => {
 
     //Pure
     event.create('chlorine').thinTexture(0xc8ff00).bucketColor(0xc8ff00).gaseous().noBucket();
+    event.create('helium').thinTexture(0xc7fadf).bucketColor(0xc7fadf).density(0.1).gaseous(); 
     event.create('radon').thinTexture(0x77ff00).bucketColor(0x77ff00).gaseous().noBucket();
     event.create('mercury').thickTexture(0xffffff).bucketColor(0xffffff);
 

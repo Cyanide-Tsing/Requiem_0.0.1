@@ -79,7 +79,7 @@ StartupEvents.registry('entity_type', event => {
             .updateInterval(3)
             .onHitBlock(context => {
                 const { entity, result } = context
-                global.onHitBehavior(entity, result.block)
+                global.onHitBehavior(entity, result)
             })
             .shouldRenderAtSqrDistance(context => {
                 const { entity, distanceToPlayer } = context;
@@ -106,15 +106,14 @@ EntityJSEvents.modifyEntity(event => {
 /**
  * 
  * @param {Internal.Entity} entity 
- * @param {Internal.Block} result 
+ * @param {Internal.BlockHitResult} result 
  */
 
 global.onHitBehavior = (entity, result) =>{
-    let block = entity.level.getBlockState(result.blockPos)
+    let block = entity.level.getBlock(result.blockPos)
     let speed = entity.getDeltaMovement().length()
     let output = global.findCyclotronResult(entity.level, block, speed)
     if (output) {
-        let block = entity.level.getBlock(result.blockPos)
         block.set('minecraft:air')
         block.popItem(output)
     }
