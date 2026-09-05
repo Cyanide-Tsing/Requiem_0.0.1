@@ -9,6 +9,7 @@ StartupEvents.registry('block', event =>{
   event.create('porous_ice').textureAll('minecraft:block/ice').soundType('stone').hardness(6).resistance(9).requiresTool(true).tagBlock('minecraft:mineable/pickaxe').tagBlock('minecraft:needs_iron_tool');
   event.create('graphite_block').soundType('stone').hardness(6).resistance(9).requiresTool(true).tagBlock('minecraft:mineable/pickaxe').tagBlock('minecraft:needs_iron_tool');
   event.create('thorium_block').soundType('stone').hardness(6).resistance(9).requiresTool(true).tagBlock('minecraft:mineable/pickaxe').tagBlock('minecraft:needs_iron_tool');
+  event.create('plutonium_block').soundType('stone').hardness(6).resistance(9).requiresTool(true).tagBlock('minecraft:mineable/pickaxe').tagBlock('minecraft:needs_iron_tool');
 
   event.create('galena_vanadinite').soundType('stone').hardness(4).resistance(2).requiresTool(true).tagBlock('minecraft:mineable/pickaxe').tagBlock('minecraft:needs_iron_tool');
   event.create('radrock_carminite').soundType('stone').hardness(4).resistance(2).requiresTool(true).tagBlock('minecraft:mineable/pickaxe').tagBlock('minecraft:needs_iron_tool');

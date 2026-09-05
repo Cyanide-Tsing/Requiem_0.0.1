@@ -23,6 +23,14 @@ const decay = {
   'kubejs:pure_uranium_block':{
     product:'kubejs:lead_block',
     duration: 576
+  },
+  'kubejs:thorium_block':{
+    product:'kubejs:lead_block',
+    duration: 192
+  },
+  'kubejs:plutonium_block':{
+    product:'kubejs:thorium_block',
+    duration: 192
   }
 }
 
