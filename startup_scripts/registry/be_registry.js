@@ -224,6 +224,23 @@ StartupEvents.registry('block', event =>{
         .availableOn((blockEntity, direction) => true)
     );
   })
+
+  event.create('soul_blast_furnace').soundType('stone').hardness(6).resistance(1).requiresTool(true).tagBlock('minecraft:mineable/axe').lightLevel(0.5)
+  .blockEntity(blockEntity => {
+    blockEntity.inventory(2,1);
+    blockEntity.clientTick(entity => global.runningSoulParticles(entity));
+    blockEntity.serverTick(entity => global.doSoulBlasting(entity));
+    blockEntity.attachCapability(
+      CapabilityBuilder.ITEM.blockEntity()
+        .extractItem((blockEntity, slot, amount, simulate) => blockEntity.inventory.extractItem(1, amount, simulate))
+        .insertItem((blockEntity, slot, stack, simulate) => blockEntity.inventory.insertItem(0, stack, simulate))
+        .getSlotLimit((blockEntity, slot) => blockEntity.inventory.getSlotLimit(slot))
+        .getSlots((blockEntity) => blockEntity.inventory.slots)
+        .getStackInSlot((blockEntity, slot) => blockEntity.inventory.getStackInSlot(slot))
+        .isItemValid((blockEntity, slot, stack) => blockEntity.inventory.isItemValid(slot, stack))
+        .availableOn((blockEntity, direction) => true)
+    );
+  })
 })
 
 global.extractElectricity = (entity) => {

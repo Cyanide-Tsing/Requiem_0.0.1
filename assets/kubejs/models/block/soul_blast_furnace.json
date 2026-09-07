@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "kubejs:block/soul_furnace_top",
+    "side": "kubejs:block/soul_furnace_side"
+  }
+}

@@ -122,6 +122,9 @@ global.runningSprinklingParticles = (entity) => {
 }
 
 let count=0;
+/**
+ * @param {Internal.BlockEntity} entity 
+ */
 global.doDecipher = (entity) => {
   count++
   if(count%10 !== 0)return;

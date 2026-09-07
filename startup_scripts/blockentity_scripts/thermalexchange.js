@@ -107,7 +107,7 @@ let energy_inside
 global.doThermalExchange = (entity) => {
     count++;
     //if(count%11 !== 0)return entity.data.thermalEnergy;
-    if(readMachine(entity).id === 'ad_astra:coal_generator'){entity.block.level.server.runCommandSilent('/data merge block '+entity.x+' '+(entity.y+1)+' '+entity.z+' {CookTimeTotal: 19200}');}
+    //if(readMachine(entity).id === 'ad_astra:coal_generator'){entity.block.level.server.runCommandSilent('/data merge block '+entity.x+' '+(entity.y+1)+' '+entity.z+' {CookTimeTotal: 19200}');}
     if(recipes.some(recipes => recipes.heat === readNeighbor(entity).id)){
         if(checkIfFlowing(readNeighbor(entity)))return;
         let recipe = recipes.find(r => r.heat === readNeighbor(entity).id)
