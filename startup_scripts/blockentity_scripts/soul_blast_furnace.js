@@ -20,12 +20,8 @@ global.addCreateHauntingRecipe = (map, recipe) => {
     let soulCost = duration > 0 ? Math.max(1, Math.round(duration / 20)) : 15
     let ingredients = recipe.getIngredients()
     for (let i = 0; i < ingredients.size(); i++) {
-        let items = ingredients.get(i).getItems()
-        for (let j = 0; j < items.length; j++) {
-            let stack = items[j]
-            if (!stack.isEmpty()) {
-                map[stack.id] = { output: outputs[0].id, soulCost: soulCost }
-            }
+        for (let id of ingredients.get(i).itemIds) {
+            map[id] = { output: outputs[0].id, soulCost: soulCost }
         }
     }
 }
@@ -37,12 +33,8 @@ global.addCursedInfuserRecipe = (map, recipe) => {
     let soulCost = Math.max(1, Math.round(recipe.getCookingTime() / 20))
     let ingredients = recipe.getIngredients()
     for (let i = 0; i < ingredients.size(); i++) {
-        let items = ingredients.get(i).getItems()
-        for (let j = 0; j < items.length; j++) {
-            let stack = items[j]
-            if (!stack.isEmpty()) {
-                map[stack.id] = { output: output.id, soulCost: soulCost }
-            }
+        for (let id of ingredients.get(i).itemIds) {
+            map[id] = { output: output.id, soulCost: soulCost }
         }
     }
 }
