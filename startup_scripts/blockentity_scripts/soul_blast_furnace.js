@@ -100,6 +100,6 @@ global.doSoulBlasting = (entity) => {
 
 global.runningSoulParticles = (entity) => {
     if (Math.random() < 0.06) {
-        entity.level.addParticle('minecraft:soul', true, entity.x + 0.5, entity.y + 1.1, entity.z + 0.5, (Math.random() - 0.5) * 0.03, 0.06, (Math.random() - 0.5) * 0.03)
+        entity.level.addParticle('minecraft:soul', true, entity.x-0.5+2*Math.random(), entity.y-0.5+2*Math.random(), entity.z-0.5+2*Math.random(), (Math.random() - 0.5) * 0.03, 0.06, (Math.random() - 0.5) * 0.03)
     }
 }

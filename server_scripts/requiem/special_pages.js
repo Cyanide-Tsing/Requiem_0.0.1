@@ -15,6 +15,7 @@ const specialPageEffects = {
     'requiem:page_of_spelunkery': function (level, player) {
         let page = findCurioPage(player, "requiem:page_of_spelunkery")
         if (player.getCooldowns().isOnCooldown(page)) return;
+         level.runCommandSilent(`playsound create:peculiar_bell_use ambient ${player.name.getString()}`)
         for(let i=0; i<16; i++){
             level.runCommandSilent(`particle minecraft:dust ${player.x + 4*Math.random() - 2} ${player.y+1} ${player.z + 4*Math.random() - 2}`)
         }
@@ -26,13 +27,14 @@ const specialPageEffects = {
         }
         else{
             player.potionEffects.add("minecraft:haste", 1000, 1, false, false)
-            player.addItemCooldown(page, 1200)
+            player.addItemCooldown(page, 900)
         }
         
     },
     'requiem:page_of_vitality': function (level, player) {
         let page = findCurioPage(player, "requiem:page_of_vitality")
         if (player.getCooldowns().isOnCooldown(page)) return;
+        level.runCommandSilent(`playsound minecraft:entity.player.levelup ambient ${player.name.getString()}`)
         for(let i=0; i<5; i++){
             level.runCommandSilent(`particle minecraft:heart ${player.x + 2*Math.random() - 1} ${player.y+1} ${player.z + 2*Math.random() - 1}`)
         }
@@ -54,6 +56,7 @@ const specialPageEffects = {
         player.addItemCooldown(page, 100)
         level.server.scheduleInTicks(5, () => {
             player.runCommandSilent('particle cataclysm:lightning_explode ~ ~1 ~')
+            level.runCommandSilent(`playsound cataclysm:emp_activated ambient ${player.name.getString()}`)
             let ACC = level.createEntity("cataclysm:accretion")
             ACC.setPos(player.x, player.y, player.z)
             ACC.spawn()
@@ -62,6 +65,7 @@ const specialPageEffects = {
     'requiem:page_of_surging_health': function (level, player) {
         let page = findCurioPage(player, "requiem:page_of_surging_health")
         if (player.getCooldowns().isOnCooldown(page)) return;
+        level.runCommandSilent(`playsound minecraft:entity.player.levelup ambient ${player.name.getString()}`)
         for(let i=0; i<10; i++){
             level.runCommandSilent(`particle minecraft:heart ${player.x + 4*Math.random() - 2} ${player.y+1} ${player.z + 4*Math.random() - 2}`)
         }
@@ -78,6 +82,7 @@ const specialPageEffects = {
         let ACC = level.createEntity("cataclysm:accretion")
         ACC.setPos(player.x, player.y, player.z)
         ACC.spawn()
+        level.runCommandSilent(`playsound minecraft:entity.generic.explode ambient ${player.name.getString()}`)
         for(let i=0; i<10; i++){
             level.runCommandSilent(`particle alexscaves:blue_raygun_explosion ${player.x + 4*Math.random() - 2} ${player.y + 0.5} ${player.z + 4*Math.random() - 2}`)
             level.runCommandSilent(`particle alexscaves:raygun_explosion ${player.x + 6*Math.random() - 3} ${player.y + 0.5} ${player.z + 6*Math.random() - 3}`)
@@ -107,6 +112,7 @@ const specialPageEffects = {
         let ACC = level.createEntity("cataclysm:accretion")
         ACC.setPos(player.x, player.y, player.z)
         ACC.spawn()
+        level.runCommandSilent(`playsound cataclysm:emp_activated ambient ${player.name.getString()}`)
         for(let i=0; i<5; i++){
             level.runCommandSilent(`particle alexscaves:magnet_lightning ${player.x} ${player.y+1} ${player.z} 0 0 0 0 1 normal`)
         }
@@ -120,6 +126,7 @@ const specialPageEffects = {
 
             target.potionEffects.add('alexscaves:stunned', 60, 0, false, false)
             target.attack(level.damageSources().playerAttack(player), 1)
+            level.runCommandSilent(`damage ${target.uuid} 5 cataclysm:emp`)
             target.attack(level.damageSources().lightningBolt(), 15)
         })
     }

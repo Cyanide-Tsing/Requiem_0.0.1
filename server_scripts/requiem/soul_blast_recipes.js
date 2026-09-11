@@ -5,7 +5,7 @@ ServerEvents.recipes(event => {
         global.addCreateHauntingRecipe(map, recipe.getOriginalRecipe())
     })
 
-    event.findRecipes({ type: 'goety:cursed_infuser' }).forEach(recipe => {
+    event.findRecipes({ type: 'goety:cursed_infuser_recipes' }).forEach(recipe => {
         global.addCursedInfuserRecipe(map, recipe.getOriginalRecipe())
     })
 

@@ -124,7 +124,7 @@ JEIAddedEvents.registerCategories(event => {
     })
 
     event.custom('requiem:soul_blast_furnace', category => {
-        category.title('灵魂高炉')
+        category.title('铸魂炉')
         category.setWidth(178)
         category.setHeight(32)
         category.background(guiHelper.createBlankDrawable(0, 0))
