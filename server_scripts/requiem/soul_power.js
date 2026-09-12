@@ -18,16 +18,16 @@ ServerEvents.commandRegistry(event => {
 })
 
 PlayerEvents.loggedIn(event=>{
-    if(event.player.server.persistentData.getInt('soul_power') == undefined) event.player.server.persistentData.putInt('soul_power', 5000)
+    if(event.player.server.persistentData.getInt('soul_power') == undefined) event.player.server.persistentData.putInt('soul_power', Math.floor(45000 + 10000 * Math.random()))
 })
 
 EntityEvents.death(event=>{
     const {entity} = event
     if(entity.type == 'minecraft:villager' || entity.type == 'minecraft:wandering_trader' || entity.type == 'goety:prisoner'){
-        alterSoulPower(1)
+        alterSoulPower(entity.server, 10)
     }
     else{
-        alterSoulPower(0.2)
+        alterSoulPower(entity.server, 2)
     }
 })
 
