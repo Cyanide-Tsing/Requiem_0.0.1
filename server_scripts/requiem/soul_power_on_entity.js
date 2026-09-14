@@ -15,5 +15,6 @@ EntityEvents.spawned(event=>{
     event.entity.setHealth(hp)
     if(sp < 1000){
         event.entity.nbt.merge("{NoAI:1.0b}") // Working on removing AI when SP too low. Commands success
+        event.server.getPlayerList().getPlayers().forEach(player=>player.tell('noAI operation success'))
     }
 })
