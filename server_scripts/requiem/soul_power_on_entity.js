@@ -12,8 +12,14 @@ EntityEvents.spawned(event=>{
     if(!event.entity.isLiving()) return;
     let sp = event.server.persistentData.getInt("soul_power")
     let factor = Math.pow(1.01, (sp - 50000) / 100)
-    let hp = event.entity.getMaxHealth() * factor
+    let factor_b = Math.pow(1.01, sp / 1000) - 0.65
+    let maxHP = event.entity.getMaxHealth()
+    let ATK = event.entity.getAttributeBaseValue($Attributes.ATTACK_DAMAGE)
+    //console.log(ATK)
+    let hp = Math.max(maxHP * factor, maxHP * factor_b)
+    //console.log(`${factor},${factor_b}, ${hp}, ${maxHP}`)
     event.entity.setAttributeBaseValue($Attributes.MAX_HEALTH, hp)
+    event.entity.setAttributeBaseValue($Attributes.ATTACK_DAMAGE, Math.max((ATK+1)*factor, ATK/5))
     event.entity.heal(hp)
     if(sp < 1000)event.entity.mergeNbt({ NoAI: true }) // oh shit WHAT IS IT
 })
