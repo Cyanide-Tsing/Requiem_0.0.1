@@ -27,7 +27,12 @@ EntityEvents.death(event=>{
         alterSoulPower(entity.server, 10)
     }
     else{
-        alterSoulPower(entity.server, 2)
+        if(entity.type == 'minecraft:warden'){
+            alterSoulPower(entity.server, 200)
+        }
+        else{
+            alterSoulPower(entity.server, 2)
+        }
     }
 })
 
