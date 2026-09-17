@@ -55,12 +55,13 @@ const transmutableMap = [
 EntityEvents.spawned(event=>{
     if(!event.entity.isLiving()) return;
     if(event.entity.isPlayer()) return;
+    if(event.entity.persistentData.contains('SoulFixed') && event.entity.persistentData.getBoolean("SoulFixed")) return;
     let sp = event.server.persistentData.getInt("soul_power")
     let factor = Math.pow(1.01, (sp - 50000) / 100)
     let factor_b = Math.pow(1.01, sp / 1000) - 0.65
     let X =  sp / 3500
-    let armor_factor = 16*Math.sqrt(X)*(Math.log(X/5)-1)
-    let armor_toughness_factor = 8*Math.sqrt(X)*(Math.log(X/5)-1)
+    let armor_factor = 4*Math.sqrt(X)*(Math.log(X/5)-1)
+    let armor_toughness_factor = 2*Math.sqrt(X)*(Math.log(X/5)-1)
     let maxHP = event.entity.getMaxHealth()
     //console.log(ATK)
     let hp = Math.floor(Math.max(maxHP * factor, maxHP * factor_b))
@@ -78,6 +79,7 @@ EntityEvents.spawned(event=>{
         event.entity.setAttributeBaseValue($Attributes.ATTACK_DAMAGE, Math.max((ATK+1)*factor, ATK/5))
     }
     if(sp < 10000)event.entity.mergeNbt({ NoAI: true }) // oh shit it's in nbt but not in persistent data
+    event.entity.persistentData.putBoolean("SoulFixed", true)
 })
 
 EntityEvents.spawned(event=>{
