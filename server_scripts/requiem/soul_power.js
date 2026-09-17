@@ -24,14 +24,14 @@ PlayerEvents.loggedIn(event=>{
 EntityEvents.death(event=>{
     const {entity} = event
     if(entity.type == 'minecraft:villager' || entity.type == 'minecraft:wandering_trader' || entity.type == 'goety:prisoner'){
-        alterSoulPower(entity.server, 10)
+        alterSoulPower(entity.server, 20)
     }
     else{
         if(entity.type == 'minecraft:warden'){
             alterSoulPower(entity.server, 200)
         }
         else{
-            alterSoulPower(entity.server, 2)
+            alterSoulPower(entity.server, 5)
         }
     }
 })
