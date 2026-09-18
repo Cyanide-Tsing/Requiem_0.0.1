@@ -1,5 +1,5 @@
 StartupEvents.registry('item', event=>{
-    event.create('soul_powered:pale_metal_pickaxe', "pickaxe")
+    event.create('pale_metal_pickaxe', "pickaxe")
         .tier('diamond')
         .attackDamageBaseline(1)
         .attackDamageBonus(1)

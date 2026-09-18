@@ -54,7 +54,7 @@ const transmutableMap = [
 
 EntityEvents.spawned(event=>{
     if(!event.entity.isLiving()) return;
-    if(event.entity.isPlayer()) return;
+    if(event.entity.isPlayer() || event.entity.type == 'dummmmmmy:target_dummy') return;
     if(event.entity.persistentData.contains('SoulFixed') && event.entity.persistentData.getBoolean("SoulFixed")) return;
     let sp = event.server.persistentData.getInt("soul_power")
     let factor = Math.pow(1.01, (sp - 50000) / 100)
