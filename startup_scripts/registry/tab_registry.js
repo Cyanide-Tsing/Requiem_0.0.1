@@ -186,7 +186,14 @@ const requiem_native = [
     'requiem:manual_of_brass',
     'requiem:page_of_antigravity',
     'requiem:page_of_charged',
-    'requiem:page_of_radioactivity'
+    'requiem:page_of_radioactivity',
+    'requiem:page_of_spelunkery',
+    'requiem:page_of_clockwork',
+    'requiem:page_of_vitality',
+    'requiem:page_of_forged_iron',
+    'requiem:page_of_alloying',
+    'requiem:page_of_surging_health',
+    'requiem:page_of_spellbreaker'
     //Item.of('requiem:page_of_charged', 1, '{energy:0}')
 ]
 

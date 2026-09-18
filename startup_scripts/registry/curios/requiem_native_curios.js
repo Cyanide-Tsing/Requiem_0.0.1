@@ -146,7 +146,7 @@ StartupEvents.registry('item', event=>{
                 .addAttribute(
                     "cataclysm:nature_heal", 
                     "requiem:page_of_vitality", 
-                    0.15, 
+                    15, 
                     "addition"
                 )
         )
@@ -189,14 +189,14 @@ StartupEvents.registry('item', event=>{
                 })
                 .addAttribute(
                     "minecraft:generic.armor",
-                    "requiem:page_of_forged_iron",
-                    8,
+                    "requiem:page_of_alloying",
+                    10,
                     "addition"
                 )
                 .addAttribute(
                     "minecraft:generic.armor_toughness",
-                    "requiem:page_of_forged_iron",
-                    2,
+                    "requiem:page_of_alloying",
+                    6,
                     "addition"
                 )
         )
@@ -373,4 +373,26 @@ StartupEvents.registry('item', event=>{
             }
             else return Color.of(0xffffff)})
           .tag('curios:page')
+    
+    event.create('requiem:page_of_spellbreaker')
+        .rarity('epic')
+        .maxStackSize(1)
+        .attachCuriosCapability(
+            CuriosJSCapabilityBuilder.create()
+                .canEquip((slotcontext, stack) => true)
+                .canUnequip((slotcontext, stack) => true)
+                .canDrop((slotContext, source, lootingLevel, recentlyHit, stack) => false)
+                .addAttribute(
+                    "goety:casting_speed",
+                    "requiem:page_of_spellbreaker",
+                    -1.0,
+                    "addition"
+                )/*
+                .addAttribute(
+                    "goetyawaken:servent_capacity",
+                    "requiem:page_of_spellbreaker",
+                    256,
+                    "addition"
+                )*/
+        ).tag("curios:page")
 })
