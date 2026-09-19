@@ -8,6 +8,7 @@ const mineralBlocks = {
     'minecraft:gold_ingot': 'minecraft:gold_block',
     'minecraft:diamond': 'minecraft:diamond_block',
     'minecraft:emerald': 'minecraft:emerald_block',
+    'minecraft:lapis_lazuli': 'minecraft:lapis_block',
     'minecraft:copper_ingot': 'minecraft:copper_block',
     'minecraft:coal': 'minecraft:coal_block',
     'minecraft:redstone': 'minecraft:redstone_block',
@@ -26,6 +27,26 @@ const polishMap = {
     'spelunkery:rough_lazurite': 'minecraft:lapis_lazuli',
     'spelunkery:rough_cinnabar': 'spelunkery:cinnabar'
 }
+
+// 加工配方（供“思考/规划”使用，模块化）
+// in: 消耗, out: 产出, at: 'workstation'（需工作台）。打磨单独处理（砂纸耐久 8）
+const recipes = (function () {
+    function o(item, count) {
+        let r = {}
+        r[item] = count
+        return r
+    }
+    let list = []
+    for (let ingot in mineralBlocks) {
+        let block = mineralBlocks[ingot]
+        list.push({ id: 'compress_' + ingot, in: o(ingot, 9), out: o(block, 1), at: 'workstation', name: '合成 ' + block })
+        list.push({ id: 'decompose_' + block, in: o(block, 1), out: o(ingot, 9), at: 'workstation', name: '分解 ' + block })
+    }
+    list.push({ id: 'sandpaper', in: { 'minecraft:paper': 1, 'minecraft:sand': 1 }, out: { 'create:sand_paper': 1 }, at: 'workstation', name: '合成砂纸' })
+    list.push({ id: 'snap_seed', in: { 'goety:snap_fungus': 1 }, out: { 'goety:snap_warts': 4 }, at: 'workstation', name: '合成砰砰菌种子' })
+    list.push({ id: 'netherite', in: { 'minecraft:netherite_scrap': 4, 'minecraft:gold_ingot': 4 }, out: { 'minecraft:netherite_ingot': 1 }, at: 'workstation', name: '合成下界合金' })
+    return list
+})()
 
 // 可烧炼的矿物（矿石/粗金属）
 const smeltables = [
@@ -143,6 +164,7 @@ global.apprenticeInteract = (ctx) => {
     else if (blockId === 'minecraft:furnace' || blockId === 'minecraft:blast_furnace' || blockId === 'minecraft:smoker') key = 'furnace'
     else if (blockId === 'minecraft:hopper') key = 'hopper'
     else if (blockId === 'minecraft:enchanting_table') key = 'enchantingTable'
+    else if (blockId === 'goety:cursed_infuser') key = 'cursedInfuser'
     else if (blockId === 'goety:raiding_chest') key = 'raiderChest'
     else if (blockId === 'minecraft:chest' || blockId === 'minecraft:trapped_chest' || blockId === 'minecraft:barrel') key = 'chest'
 
@@ -462,8 +484,281 @@ function handleFarming(entity, inv, pos) {
     return true
 }
 
+// ---------- 思考/规划系统 ----------
+function recipeById(id) {
+    for (let r of recipes) if (r.id === id) return r
+    return null
+}
+function recipesByOutput(item) {
+    let result = []
+    for (let r of recipes) if (r.out[item]) result.push(r)
+    return result
+}
+function roughForPolished(polished) {
+    for (let rough in polishMap) if (polishMap[rough] === polished) return rough
+    return null
+}
+function cloneInv(obj) {
+    let r = {}
+    for (let k in obj) r[k] = obj[k]
+    return r
+}
+function availableCount(inv, chestInv, item) {
+    return (inv[item] || 0) + (chestInv[item] || 0)
+}
+function applyStep(inv, chestInv, step) {
+    if (step.a === 'take') {
+        inv[step.item] = (inv[step.item] || 0) + step.count
+        chestInv[step.item] = (chestInv[step.item] || 0) - step.count
+    } else if (step.a === 'craft') {
+        let r = recipeById(step.recipe)
+        if (r) {
+            let times = step.count || 1
+            for (let k in r.in) inv[k] = (inv[k] || 0) - r.in[k] * times
+            for (let k in r.out) inv[k] = (inv[k] || 0) + r.out[k] * times
+        }
+    } else if (step.a === 'polish') {
+        // 砂纸耐久 8：磨 count 个宝石消耗 ceil(count/8) 张砂纸
+        let polished = polishMap[step.rough]
+        inv[step.rough] = (inv[step.rough] || 0) - step.count
+        inv['create:sand_paper'] = (inv['create:sand_paper'] || 0) - Math.ceil(step.count / 8)
+        inv[polished] = (inv[polished] || 0) + step.count
+    }
+}
+function applyPlan(inv, chestInv, plan) {
+    for (let step of plan) applyStep(inv, chestInv, step)
+}
+
+// 读取箱子内容（所有物品，未附魔）
+function getChestInvMap(level, pos) {
+    let chest = getStorageChest(level, pos)
+    let map = {}
+    if (chest) {
+        for (let i = 0; i < chest.getContainerSize(); i++) {
+            let s = chest.getItem(i)
+            if (!s.isEmpty() && !s.isEnchanted()) map[s.id] = (map[s.id] || 0) + s.count
+        }
+    }
+    return map
+}
+
+// 反向规划：获得 item 数量 count（返回步骤数组或 null）
+function planGetItem(inv, chestInv, item, count, depth, visited) {
+    if (depth > 8) return null
+    if ((inv[item] || 0) >= count) return []
+    if (visited.indexOf(item) !== -1) return null
+    // 直接从箱子拿
+    let chestHas = chestInv[item] || 0
+    if (chestHas > 0) {
+        let take = Math.min(chestHas, count - (inv[item] || 0))
+        let step = { a: 'take', item: item, count: take }
+        let ni = cloneInv(inv), nc = cloneInv(chestInv)
+        applyStep(ni, nc, step)
+        let rest = planGetItem(ni, nc, item, count, depth + 1, visited.concat(item))
+        if (rest) return [step].concat(rest)
+    }
+    // 通过配方
+    for (let r of recipesByOutput(item)) {
+        let ni = cloneInv(inv), nc = cloneInv(chestInv)
+        let nv = visited.concat(item)
+        let subPlans = []
+        let ok = true
+        for (let inItem in r.in) {
+            let sub = planGetItem(ni, nc, inItem, r.in[inItem], depth + 1, nv)
+            if (!sub) { ok = false; break }
+            applyPlan(ni, nc, sub)
+            subPlans.push(sub)
+        }
+        if (!ok) continue
+        let plan = []
+        for (let s of subPlans) plan = plan.concat(s)
+        plan.push({ a: 'craft', recipe: r.id })
+        return plan
+    }
+    // 打磨（砂纸耐久 8）
+    let rough = roughForPolished(item)
+    if (rough) {
+        let needSand = Math.ceil(count / 8)
+        let ni = cloneInv(inv), nc = cloneInv(chestInv)
+        let nv = visited.concat(item)
+        let roughPlan = planGetItem(ni, nc, rough, count, depth + 1, nv)
+        if (roughPlan) {
+            applyPlan(ni, nc, roughPlan)
+            let sandPlan = planGetItem(ni, nc, 'create:sand_paper', needSand, depth + 1, nv)
+            if (sandPlan) {
+                let plan = roughPlan.concat(sandPlan)
+                plan.push({ a: 'polish', rough: rough, count: count })
+                return plan
+            }
+        }
+    }
+    return null
+}
+
+function findEnchantableItem(inv, chestInv) {
+    for (let id in inv) if (inv[id] > 0 && isEnchantable(id)) return id
+    for (let id in chestInv) if (chestInv[id] > 0 && isEnchantable(id)) return id
+    return null
+}
+
+function planEnchant(inv, chestInv) {
+    let item = findEnchantableItem(inv, chestInv)
+    if (!item) return null
+    let ni = cloneInv(inv), nc = cloneInv(chestInv)
+    let plan = []
+    if (!(ni[item] || 0)) {
+        let step = { a: 'take', item: item, count: 1 }
+        applyStep(ni, nc, step)
+        plan.push(step)
+    }
+    let lapisPlan = planGetItem(ni, nc, 'minecraft:lapis_lazuli', 3, 0, [])
+    if (!lapisPlan) return null
+    plan = plan.concat(lapisPlan)
+    plan.push({ a: 'enchant' })
+    return plan
+}
+
+function planNetherite(inv, chestInv) {
+    let ni = cloneInv(inv), nc = cloneInv(chestInv)
+    // 批量检测：最多能合成多少下界合金（金块可分解为 9 金锭）
+    let scrap = availableCount(ni, nc, 'minecraft:netherite_scrap')
+    let goldIngot = availableCount(ni, nc, 'minecraft:gold_ingot')
+    let goldBlock = availableCount(ni, nc, 'minecraft:gold_block')
+    let totalGold = goldIngot + goldBlock * 9
+    let maxCount = Math.min(Math.floor(scrap / 4), Math.floor(totalGold / 4))
+    if (maxCount < 1) return null
+    let plan = []
+    let scrapPlan = planGetItem(ni, nc, 'minecraft:netherite_scrap', maxCount * 4, 0, [])
+    if (!scrapPlan) return null
+    applyPlan(ni, nc, scrapPlan)
+    plan = plan.concat(scrapPlan)
+    let goldPlan = planGetItem(ni, nc, 'minecraft:gold_ingot', maxCount * 4, 0, [])
+    if (!goldPlan) return null
+    plan = plan.concat(goldPlan)
+    plan.push({ a: 'craft', recipe: 'netherite', count: maxCount })
+    return plan
+}
+
+// 计划存储
+function getPlan(entity) {
+    let s = entity.persistentData.getString('plan')
+    return s ? JSON.parse(s) : []
+}
+function setPlan(entity, plan) {
+    entity.persistentData.putString('plan', JSON.stringify(plan || []))
+}
+
+function describeStep(step) {
+    if (step.a === 'take') return '取 ' + step.item + 'x' + step.count
+    if (step.a === 'craft') {
+        let r = recipeById(step.recipe)
+        let n = r ? r.name : step.recipe
+        return (step.count && step.count > 1) ? n + ' x' + step.count : n
+    }
+    if (step.a === 'polish') return '打磨 ' + step.rough
+    if (step.a === 'enchant') return '附魔'
+    return step.a
+}
+
+function executeStep(entity, inv, pos, step) {
+    let level = entity.level
+    if (step.a === 'take') {
+        let chest = getStorageChest(level, pos)
+        if (!chest) return
+        let need = step.count
+        for (let i = 0; i < chest.getContainerSize() && need > 0; i++) {
+            let s = chest.getItem(i)
+            if (!s.isEmpty() && !s.isEnchanted() && s.id === step.item) {
+                let take = Math.min(s.count, need)
+                addInv(inv, step.item, take)
+                if (s.count === take) chest.setItem(i, $ItemStack.EMPTY)
+                else chest.setItem(i, Item.of(step.item, s.count - take))
+                need -= take
+            }
+        }
+        if (need < step.count) debugItem(entity, '取 ' + (step.count - need) + 'x ' + step.item)
+    } else if (step.a === 'craft') {
+        let r = recipeById(step.recipe)
+        if (!r) return
+        let times = step.count || 1
+        let enough = true
+        for (let k in r.in) if ((inv[k] || 0) < r.in[k] * times) { enough = false; break }
+        if (enough) {
+            for (let k in r.in) removeInv(inv, k, r.in[k] * times)
+            for (let k in r.out) addInv(inv, k, r.out[k] * times)
+            debugItem(entity, r.name + (times > 1 ? ' x' + times : ''))
+        }
+    } else if (step.a === 'polish') {
+        polishGems(inv, entity)
+        debugItem(entity, '打磨 ' + step.rough)
+    } else if (step.a === 'enchant') {
+        enchant(level, inv, entity, pos)
+    }
+}
+
+// 执行计划中的下一步（返回 true 表示正在执行计划）
+function stepPlan(entity, inv, pos) {
+    let plan = getPlan(entity)
+    if (!plan || plan.length === 0) return false
+    let step = plan[0]
+    let level = entity.level
+    let targetPos = null
+    let navTask = ''
+    if (step.a === 'take') {
+        targetPos = pos.chest || pos.raiderChest
+        navTask = '前往箱子'
+    } else if (step.a === 'craft') {
+        let r = recipeById(step.recipe)
+        if (r && r.at === 'workstation') {
+            targetPos = pos.workstation
+            navTask = '前往工作台'
+        }
+    } else if (step.a === 'enchant') {
+        targetPos = pos.enchantingTable
+        navTask = '前往附魔台'
+    }
+    if (targetPos) {
+        let dx = entity.x - (targetPos[0] + 0.5)
+        let dy = entity.y - targetPos[1]
+        let dz = entity.z - (targetPos[2] + 0.5)
+        if (dx * dx + dy * dy + dz * dz > WORK_DIST_SQ) {
+            entity.navigation.moveTo(targetPos[0] + 0.5, targetPos[1], targetPos[2] + 0.5, 1.0)
+            setTask(entity, navTask + '（计划）')
+            return true
+        }
+    }
+    executeStep(entity, inv, pos, step)
+    plan.shift()
+    setPlan(entity, plan)
+    setTask(entity, '执行 ' + describeStep(step))
+    return true
+}
+
+// 思考：为可达成目标生成计划
+function thinkAndPlan(entity, inv, pos) {
+    let level = entity.level
+    let chestInv = getChestInvMap(level, pos)
+    if (pos.enchantingTable) {
+        let plan = planEnchant(inv, chestInv)
+        if (plan && plan.length) {
+            setPlan(entity, plan)
+            setTask(entity, '思考 ' + plan.map(describeStep).join(' → '))
+            return true
+        }
+    }
+    if (pos.workstation) {
+        let plan = planNetherite(inv, chestInv)
+        if (plan && plan.length) {
+            setPlan(entity, plan)
+            setTask(entity, '思考 ' + plan.map(describeStep).join(' → '))
+            return true
+        }
+    }
+    return false
+}
+
 // ---------- 寻路 ----------
-const positionPriority = ['hopper', 'chest', 'raiderChest', 'furnace', 'workstation', 'enchantingTable']
+const positionPriority = ['hopper', 'chest', 'raiderChest', 'furnace', 'workstation']
 const WORK_DIST_SQ = 6.25 // 约 2.5 格内视为到达
 const FURNACE_OUTPUT_THRESHOLD = 16 // 熔炉产物攒够 16 个才取一次
 
@@ -476,11 +771,7 @@ function needsWork(level, inv, pos, key) {
         if ((inv['goety:snap_fungus'] || 0) >= 1) return true
         return (inv['minecraft:paper'] || 0) >= 1 && (inv['minecraft:sand'] || 0) >= 1
     }
-    if (key === 'enchantingTable') {
-        if ((inv['minecraft:lapis_lazuli'] || 0) < 3) return false
-        for (let id in inv) if (isEnchantable(id)) return true
-        return false
-    }
+    if (key === 'enchantingTable') return false // 附魔改由规划系统处理
     let be = getContainerAt(level, p)
     if (!be) return false
     switch (key) {
@@ -590,6 +881,18 @@ global.apprenticeAI = (entity) => {
 
     // 农田：搜索 8 格内成熟作物/紫水晶簇并处理（优先于专注队列）
     if (handleFarming(entity, inv, pos)) {
+        writeInv(entity, inv)
+        return
+    }
+
+    // 执行计划（思考后生成的步骤）
+    if (stepPlan(entity, inv, pos)) {
+        writeInv(entity, inv)
+        return
+    }
+
+    // 思考：为可达成目标（附魔/下界合金）生成计划
+    if (thinkAndPlan(entity, inv, pos)) {
         writeInv(entity, inv)
         return
     }
