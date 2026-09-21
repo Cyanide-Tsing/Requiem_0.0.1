@@ -15,4 +15,13 @@ StartupEvents.registry('item', event=>{
                 .fastToEat()
             }
         );
+
+    event.create('wart_bread').maxStackSize(64)
+        .food(food =>{
+            food.hunger(8)
+                .effect('minecraft:regeneration', 200, 1, 1)
+                .saturation(1)
+                .fastToEat()
+            }
+        );
 })

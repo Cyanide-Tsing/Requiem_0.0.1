@@ -1,6 +1,7 @@
 const $WaystoneItem = Java.loadClass('com.Polarice3.Goety.common.items.WaystoneItem')
 const $EnchantmentHelper = Java.loadClass('net.minecraft.world.item.enchantment.EnchantmentHelper')
 const $ItemStack = Java.loadClass('net.minecraft.world.item.ItemStack')
+const $AABB = Java.loadClass('net.minecraft.world.phys.AABB')
 
 // 矿物块合成表（9 锭 -> 1 块）
 const mineralBlocks = {
@@ -13,6 +14,8 @@ const mineralBlocks = {
     'minecraft:coal': 'minecraft:coal_block',
     'minecraft:redstone': 'minecraft:redstone_block',
     'minecraft:netherite_ingot': 'minecraft:netherite_block',
+    'goety:cursed_ingot': 'goety:cursed_metal_block',
+    'goety:pale_steel_ingot': 'goety:pale_steel_block',
     'kubejs:platinum_ingot': 'kubejs:platinum_block',
     'kubejs:lead_ingot': 'kubejs:lead_block',
     'kubejs:thorium_ingot': 'kubejs:thorium_block',
@@ -29,7 +32,7 @@ const polishMap = {
 }
 
 // 加工配方（供“思考/规划”使用，模块化）
-// in: 消耗, out: 产出, at: 'workstation'（需工作台）。打磨单独处理（砂纸耐久 8）
+// in: 消耗, out: 产出, at: 'workstation'（工作台）| 'cursedInfuser'（诅咒注入器）。打磨单独处理（砂纸耐久 8）
 const recipes = (function () {
     function o(item, count) {
         let r = {}
@@ -45,8 +48,46 @@ const recipes = (function () {
     list.push({ id: 'sandpaper', in: { 'minecraft:paper': 1, 'minecraft:sand': 1 }, out: { 'create:sand_paper': 1 }, at: 'workstation', name: '合成砂纸' })
     list.push({ id: 'snap_seed', in: { 'goety:snap_fungus': 1 }, out: { 'goety:snap_warts': 4 }, at: 'workstation', name: '合成砰砰菌种子' })
     list.push({ id: 'netherite', in: { 'minecraft:netherite_scrap': 4, 'minecraft:gold_ingot': 4 }, out: { 'minecraft:netherite_ingot': 1 }, at: 'workstation', name: '合成下界合金' })
+    // 工具合成
+    list.push({ id: 'iron_pickaxe', in: { 'minecraft:iron_ingot': 3, 'minecraft:stick': 2 }, out: { 'minecraft:iron_pickaxe': 1 }, at: 'workstation', name: '合成铁镐' })
+    list.push({ id: 'pale_steel_pickaxe', in: { 'goety:pale_steel_ingot': 3, 'minecraft:stick': 2 }, out: { 'kubejs:pale_metal_pickaxe': 1 }, at: 'workstation', name: '合成苍白钢镐',
+        make: () => Item.of('kubejs:pale_metal_pickaxe', '{Damage:0}').enchant('minecraft:unbreaking', 4).enchant('minecraft:efficiency', 3).enchant('minecraft:fortune', 4) })
+    // 诅咒注入器配方
+    list.push({ id: 'cursed_ingot', in: { 'minecraft:iron_ingot': 1 }, out: { 'goety:cursed_ingot': 1 }, at: 'cursedInfuser', name: '注入诅咒锭' })
+    list.push({ id: 'magic_emerald', in: { 'minecraft:emerald': 1 }, out: { 'goety:magic_emerald': 1 }, at: 'cursedInfuser', name: '注入魔法绿宝石' })
+    list.push({ id: 'empty_focus', in: { 'minecraft:amethyst_shard': 1 }, out: { 'goety:empty_focus': 1 }, at: 'cursedInfuser', name: '注入空法术聚晶' })
+    //食物合成
+    list.push({ id: 'wart_bread', in: { 'farmersdelight:wheat_dough': 1, 'minecraft:nether_wart': 1}, out: { 'kubejs:wart_bread': 1 }, at: 'workstation', name: '合成下界面包' })
+    // 工作台配方（高级合成）
+    list.push({ id: 'soul_emerald', in: { 'goety:magic_emerald': 8, 'goety:empty_focus': 1 }, out: { 'goety:soul_emerald': 1 }, at: 'workstation', name: '合成灵魂绿宝石' })
+    list.push({ id: 'pale_steel_ingot', in: { 'goety:cursed_ingot': 1, 'minecraft:iron_ingot': 1, 'minecraft:lapis_lazuli': 1, 'minecraft:coal': 1 }, out: { 'goety:pale_steel_ingot': 2 }, at: 'workstation', name: '合成苍白钢锭' })
+    list.push({ id: 'diamond_pickaxe', in: { 'minecraft:diamond': 3, 'minecraft:stick': 2}, out: { 'minecraft:diamond_pickaxe': 1 }, at: 'workstation', name: '合成钻石镐' })
+    // 工具与工具配方（工具不消耗）
+    list.push({ id: 'bucket', in: { 'minecraft:iron_ingot': 3 }, out: { 'minecraft:bucket': 1 }, at: 'workstation', name: '合成铁桶' })
+    list.push({ id: 'fill_bucket', in: { 'minecraft:bucket': 1 }, out: { 'minecraft:water_bucket': 1 }, at: 'water', name: '装水' })
+    list.push({ id: 'pulverize_focus', in: { 'goety:empty_focus': 1, 'minecraft:iron_block': 3, 'minecraft:oak_log': 1 }, out: { 'goety:pulverize_focus': 1 }, at: 'workstation', name: '合成瓦解聚晶' })
+    list.push({ id: 'wheat_dough', in: { 'minecraft:water_bucket': 1, 'minecraft:wheat': 1 }, out: { 'farmersdelight:wheat_dough': 1, 'minecraft:bucket': 1 }, at: 'workstation', name: '合成面团' })
+    list.push({ id: 'stone_to_cobblestone', in: { 'minecraft:stone': 1 }, tool: 'goety:pulverize_focus', out: { 'minecraft:cobblestone': 1 }, at: 'workstation', name: '粉碎石头' })
+    list.push({ id: 'cobblestone_to_gravel', in: { 'minecraft:cobblestone': 1 }, tool: 'goety:pulverize_focus', out: { 'minecraft:gravel': 1 }, at: 'workstation', name: '粉碎圆石' })
+    list.push({ id: 'gravel_to_sand', in: { 'minecraft:gravel': 1 }, tool: 'goety:pulverize_focus', out: { 'minecraft:sand': 1 }, at: 'workstation', name: '粉碎沙砾' })
     return list
 })()
+
+// 基座（Pedestal）过滤：基座上的物品 -> 目标配方 id
+const pedestalTargets = {
+    'goety:cursed_ingot': 'cursed_ingot',
+    'goety:magic_emerald': 'magic_emerald',
+    'goety:soul_emerald': 'soul_emerald',
+    'goety:pale_steel_ingot': 'pale_steel_ingot',
+    'minecraft:iron_pickaxe': 'iron_pickaxe',
+    'minecraft:diamond_pickaxe': 'diamond_pickaxe',
+    'kubejs:pale_metal_pickaxe': 'pale_steel_pickaxe',
+    'farmersdelight:wheat_dough': 'wheat_dough',
+    'minecraft:cobblestone': 'stone_to_cobblestone',
+    'minecraft:gravel': 'cobblestone_to_gravel',
+    'minecraft:sand': 'gravel_to_sand',
+    'kubejs:wart_bread': 'wart_bread'
+}
 
 // 可烧炼的矿物（矿石/粗金属）
 const smeltables = [
@@ -61,8 +102,8 @@ const fuels = ['minecraft:coal', 'minecraft:charcoal', 'minecraft:coal_block']
 
 // 诅咒注入器输入（简化清单，实际可用 tag 匹配更多）
 const cursedInfuserInputs = [
-    'minecraft:iron_ingot', 'minecraft:emerald', 'minecraft:obsidian',
-    'minecraft:amethyst_shard'
+    'minecraft:iron_ingot', 'minecraft:emerald', 'minecraft:calcite',
+    'minecraft:amethyst_shard', 'minecraft:stone'
 ]
 
 // 农田作物（8 格内自动收割 + 补种）
@@ -71,6 +112,37 @@ const farmCrops = {
     'minecraft:nether_wart': { maxAge: 3, seed: 'minecraft:nether_wart', harvest: 'minecraft:nether_wart', keepHarvest: false },
     'goety:snap_warts': { maxAge: 2, seed: 'goety:snap_warts', harvest: 'goety:snap_fungus', keepHarvest: true }
 }
+
+// 种植盆作物（原版 + 农夫乐事）；作物在种植盆上方一格
+const planterBlocks = ['supplementaries:planter', 'supplementaries:planter_rich']
+const planterCrops = {
+    'minecraft:wheat': { maxAge: 7, seed: 'minecraft:wheat_seeds' },
+    'minecraft:carrots': { maxAge: 7, seed: 'minecraft:carrot' },
+    'minecraft:potatoes': { maxAge: 7, seed: 'minecraft:potato' },
+    'minecraft:beetroots': { maxAge: 3, seed: 'minecraft:beetroot_seeds' },
+    'farmersdelight:cabbages': { maxAge: 7, seed: 'farmersdelight:cabbage_seeds' },
+    'farmersdelight:onions': { maxAge: 7, seed: 'farmersdelight:onion' },
+    'farmersdelight:tomatoes': { maxAge: 3, seed: 'farmersdelight:tomato_seeds' },
+    'farmersdelight:rice_panicles': { maxAge: 3, seed: 'farmersdelight:rice' }
+}
+// 需要保留种子的作物（种子 ≠ 收获物，掉落可能没有种子）
+const planterSeedReserve = {
+    'minecraft:wheat_seeds': 8,
+    'minecraft:beetroot_seeds': 8,
+    'farmersdelight:cabbage_seeds': 8,
+    'farmersdelight:tomato_seeds': 8
+}
+
+// 工具（会在合成中用到但通常不消耗，需要保留）
+const toolItems = ['minecraft:bucket', 'minecraft:water_bucket', 'goety:pulverize_focus']
+
+// 工作物品保留数量（超过则存回箱子）
+const itemReserve = {
+    'goety:snap_warts': 8,
+    'minecraft:amethyst_shard': 16,
+    'goety:pulverize_focus': 1
+}
+for (let s in planterSeedReserve) itemReserve[s] = planterSeedReserve[s]
 
 
 // ---------- 库存（JSON 存于 NBT） ----------
@@ -105,7 +177,8 @@ function isWorkItem(id) {
         cursedInfuserInputs.indexOf(id) !== -1 || isEnchantable(id) ||
         id === 'minecraft:paper' || id === 'minecraft:sand' ||
         id === 'create:sand_paper' || id === 'minecraft:lapis_lazuli' ||
-        id === 'goety:snap_warts' || id === 'goety:snap_fungus')
+        id === 'goety:snap_warts' || id === 'goety:snap_fungus' ||
+        planterSeedReserve[id] !== undefined || toolItems.indexOf(id) !== -1)
 }
 
 // ---------- 记忆（专注队列，长度 5） ----------
@@ -165,6 +238,7 @@ global.apprenticeInteract = (ctx) => {
     else if (blockId === 'minecraft:hopper') key = 'hopper'
     else if (blockId === 'minecraft:enchanting_table') key = 'enchantingTable'
     else if (blockId === 'goety:cursed_infuser') key = 'cursedInfuser'
+    else if (blockId === 'supplementaries:pedestal' || blockId === 'goety:pedestal') key = 'pedestal'
     else if (blockId === 'goety:raiding_chest') key = 'raiderChest'
     else if (blockId === 'minecraft:chest' || blockId === 'minecraft:trapped_chest' || blockId === 'minecraft:barrel') key = 'chest'
 
@@ -183,22 +257,34 @@ function useRaiderChest(level, inv, pos, entity) {
     let be = getContainerAt(level, pos)
     if (!be) return
     let did = []
-    // 把库存里非工作物品存入箱子
+    // 打开箱子动画
+    try { entity.triggerAnim('interact', 'interact') } catch (e) {}
+    // 把库存里非工作物品存入箱子（合并同类，不超堆叠上限）
     for (let id in inv) {
         if (isWorkItem(id)) continue
-        let slot = findEmptySlot(be)
-        if (slot === -1) break
-        be.setItem(slot, Item.of(id, inv[id]))
-        did.push('存 ' + inv[id] + 'x' + id)
-        delete inv[id]
+        let left = depositStackToContainer(be, id, inv[id])
+        let put = inv[id] - left
+        if (put > 0) did.push('存 ' + put + 'x' + id)
+        if (left <= 0) delete inv[id]
+        else {
+            inv[id] = left
+            break
+        }
     }
-    // 从箱子取出所有工作物品（矿石 / rough gem / 燃料 / 锭 / 纸 / 沙 / 青金石等）；已附魔的跳过
+    // 从箱子取出工作物品；保留数量的物品只取到保留上限（避免存取死循环）
     for (let i = 0; i < be.getContainerSize(); i++) {
         let stack = be.getItem(i)
         if (!stack.isEmpty() && isWorkItem(stack.id) && !stack.isEnchanted()) {
-            addInv(inv, stack.id, stack.count)
-            be.setItem(i, $ItemStack.EMPTY)
-            did.push('取 ' + stack.count + 'x' + stack.id)
+            let take = stack.count
+            if (itemReserve[stack.id] !== undefined) {
+                let need = itemReserve[stack.id] - (inv[stack.id] || 0)
+                if (need <= 0) continue
+                take = Math.min(stack.count, need)
+            }
+            addInv(inv, stack.id, take)
+            if (take < stack.count) be.setItem(i, Item.of(stack.id, stack.count - take))
+            else be.setItem(i, $ItemStack.EMPTY)
+            did.push('取 ' + take + 'x' + stack.id)
         }
     }
     if (did.length) debugItem(entity, '箱子 ' + did.join(', '))
@@ -208,6 +294,33 @@ function findEmptySlot(be) {
         if (be.getItem(i).isEmpty()) return i
     }
     return -1
+}
+
+// 把物品存入容器，合并同类可堆叠物品，不超过堆叠上限；返回未存入的数量
+function depositStackToContainer(be, id, count) {
+    let maxStack = 64
+    try {
+        let probe = Item.of(id)
+        if (probe && probe.getMaxStackSize) maxStack = probe.getMaxStackSize()
+    } catch (e) {}
+    // 先合并到已有同类堆叠
+    for (let i = 0; i < be.getContainerSize() && count > 0; i++) {
+        let s = be.getItem(i)
+        if (!s.isEmpty() && s.id === id && s.count < maxStack) {
+            let add = Math.min(maxStack - s.count, count)
+            be.setItem(i, Item.of(id, s.count + add))
+            count -= add
+        }
+    }
+    // 剩余放入空槽
+    while (count > 0) {
+        let slot = findEmptySlot(be)
+        if (slot === -1) break
+        let put = Math.min(maxStack, count)
+        be.setItem(slot, Item.of(id, put))
+        count -= put
+    }
+    return count
 }
 function getStorageChest(level, pos) {
     for (let key of ['chest', 'raiderChest']) {
@@ -219,6 +332,15 @@ function getStorageChest(level, pos) {
     return null
 }
 
+// 读取基座（Pedestal）上的展示物品 id，无则返回 null
+function getPedestalItem(level, pos) {
+    if (!pos.pedestal) return null
+    let be = getContainerAt(level, pos.pedestal)
+    if (!be) return null
+    let stack = be.getItem(0)
+    return stack && !stack.isEmpty() ? stack.id : null
+}
+
 // 定期把背包里非工作物品存入注册箱子（背景工序）
 function depositNonWorkItems(entity, inv, pos) {
     let chest = getStorageChest(entity.level, pos)
@@ -226,13 +348,31 @@ function depositNonWorkItems(entity, inv, pos) {
     let did = []
     for (let id in inv) {
         if (isWorkItem(id)) continue
-        let slot = findEmptySlot(chest)
-        if (slot === -1) break
-        chest.setItem(slot, Item.of(id, inv[id]))
-        did.push(inv[id] + 'x' + id)
-        delete inv[id]
+        let left = depositStackToContainer(chest, id, inv[id])
+        let put = inv[id] - left
+        if (put > 0) did.push(put + 'x ' + id)
+        if (left <= 0) delete inv[id]
+        else { inv[id] = left; break }
     }
     if (did.length) debugItem(entity, '存 ' + did.join(', '))
+}
+
+// 把超出保留数量的工作物品存回箱子（背景工序）
+function depositSurplus(entity, inv, pos) {
+    let chest = getStorageChest(entity.level, pos)
+    if (!chest) return
+    let did = []
+    for (let item in itemReserve) {
+        let keep = itemReserve[item]
+        let have = inv[item] || 0
+        if (have <= keep) continue
+        let excess = have - keep
+        let left = depositStackToContainer(chest, item, excess)
+        let put = excess - left
+        inv[item] = keep + left
+        if (put > 0) did.push(put + 'x ' + item)
+    }
+    if (did.length) debugItem(entity, '存多余 ' + did.join(', '))
 }
 
 // ---------- 行为：漏斗取物 ----------
@@ -418,11 +558,10 @@ function findFarmTarget(level, entity, inv) {
 function storeHarvest(level, pos, inv, id, count) {
     let chest = getStorageChest(level, pos)
     if (chest) {
-        let slot = findEmptySlot(chest)
-        if (slot !== -1) {
-            chest.setItem(slot, Item.of(id, count))
-            return
-        }
+        let left = depositStackToContainer(chest, id, count)
+        if (left <= 0) return
+        addInv(inv, id, left)
+        return
     }
     addInv(inv, id, count)
 }
@@ -481,6 +620,71 @@ function handleFarming(entity, inv, pos) {
     if (target.type === 'crop') harvestCrop(level, inv, target, entity, pos)
     else harvestAmethyst(level, inv, target, entity, pos)
     setTask(entity, target.type === 'crop' ? '收割作物' : '采集紫水晶')
+    return true
+}
+
+// ---------- 种植盆：收割 + 补种 ----------
+function findPlanterTarget(level, entity) {
+    let bx = Math.floor(entity.x), by = Math.floor(entity.y), bz = Math.floor(entity.z)
+    for (let dy = -FARM_RANGE; dy <= FARM_RANGE; dy++)
+        for (let dz = -FARM_RANGE; dz <= FARM_RANGE; dz++)
+            for (let dx = -FARM_RANGE; dx <= FARM_RANGE; dx++) {
+                let x = bx + dx, y = by + dy, z = bz + dz
+                let planterBc = level.getBlock(x, y, z)
+                if (!planterBc) continue
+                if (planterBlocks.indexOf(planterBc.id) === -1) continue
+                let cropBc = level.getBlock(x, y + 1, z)
+                if (!cropBc) continue
+                let crop = planterCrops[cropBc.id]
+                if (!crop) continue
+                if (getCropAge(cropBc) >= crop.maxAge) {
+                    return { type: 'planter', cropId: cropBc.id, x: x, y: y + 1, z: z, bc: cropBc }
+                }
+            }
+    return null
+}
+
+function harvestPlanterCrop(level, inv, target, entity, pos) {
+    let bc = target.bc
+    let crop = planterCrops[target.cropId]
+    let drops = bc.getDrops() || []
+    // 补种：重置 age 为 0，保留附加属性
+    let props = bc.getProperties()
+    let newProps = { age: '0' }
+    let ropelogged = props.get('ropelogged')
+    if (ropelogged !== null && ropelogged !== undefined) newProps.ropelogged = ropelogged
+    let supporting = props.get('supporting')
+    if (supporting !== null && supporting !== undefined) newProps.supporting = supporting
+    bc.set(target.cropId, newProps, 3)
+    // 种子消耗（掉落里优先扣 1 个种子，否则从背包扣）
+    let usedSeed = false
+    for (let stack of drops) {
+        if (stack.count <= 0) continue
+        let put = stack.count
+        if (!usedSeed && stack.id === crop.seed) {
+            put -= 1
+            usedSeed = true
+        }
+        if (put > 0) storeHarvest(level, pos, inv, stack.id, put)
+    }
+    if (!usedSeed) removeInv(inv, crop.seed, 1)
+    debugItem(entity, '收割 ' + target.cropId)
+}
+
+function handlePlanterFarming(entity, inv, pos) {
+    let level = entity.level
+    let target = findPlanterTarget(level, entity)
+    if (!target) return false
+    let dx = entity.x - (target.x + 0.5)
+    let dy = entity.y - target.y
+    let dz = entity.z - (target.z + 0.5)
+    if (dx * dx + dy * dy + dz * dz > WORK_DIST_SQ) {
+        entity.navigation.moveTo(target.x + 0.5, target.y, target.z + 0.5, 1.0)
+        setTask(entity, '前往种植盆')
+        return true
+    }
+    harvestPlanterCrop(level, inv, target, entity, pos)
+    setTask(entity, '收割种植盆')
     return true
 }
 
@@ -543,28 +747,39 @@ function getChestInvMap(level, pos) {
 }
 
 // 反向规划：获得 item 数量 count（返回步骤数组或 null）
-function planGetItem(inv, chestInv, item, count, depth, visited) {
+// produce=true 时，该 item 必须通过配方生产，不从箱子取也不视作已有（用于 goal 物品）
+function planGetItem(inv, chestInv, item, count, depth, visited, produce) {
     if (depth > 8) return null
-    if ((inv[item] || 0) >= count) return []
+    if (!produce && (inv[item] || 0) >= count) return []
     if (visited.indexOf(item) !== -1) return null
-    // 直接从箱子拿
-    let chestHas = chestInv[item] || 0
-    if (chestHas > 0) {
-        let take = Math.min(chestHas, count - (inv[item] || 0))
-        let step = { a: 'take', item: item, count: take }
-        let ni = cloneInv(inv), nc = cloneInv(chestInv)
-        applyStep(ni, nc, step)
-        let rest = planGetItem(ni, nc, item, count, depth + 1, visited.concat(item))
-        if (rest) return [step].concat(rest)
+    if (!produce) {
+        // 直接从箱子拿
+        let chestHas = chestInv[item] || 0
+        if (chestHas > 0) {
+            let take = Math.min(chestHas, count - (inv[item] || 0))
+            let step = { a: 'take', item: item, count: take }
+            let ni = cloneInv(inv), nc = cloneInv(chestInv)
+            applyStep(ni, nc, step)
+            let rest = planGetItem(ni, nc, item, count, depth + 1, visited.concat(item))
+            if (rest) return [step].concat(rest)
+        }
     }
-    // 通过配方
+    // 通过配方（批量）
     for (let r of recipesByOutput(item)) {
+        let times = Math.ceil(count / (r.out[item] || 1))
         let ni = cloneInv(inv), nc = cloneInv(chestInv)
         let nv = visited.concat(item)
         let subPlans = []
         let ok = true
+        // 工具（不消耗）：确保背包里有工具
+        if (r.tool) {
+            let toolPlan = planGetItem(ni, nc, r.tool, 1, depth + 1, nv)
+            if (!toolPlan) continue
+            applyPlan(ni, nc, toolPlan)
+            subPlans.push(toolPlan)
+        }
         for (let inItem in r.in) {
-            let sub = planGetItem(ni, nc, inItem, r.in[inItem], depth + 1, nv)
+            let sub = planGetItem(ni, nc, inItem, r.in[inItem] * times, depth + 1, nv)
             if (!sub) { ok = false; break }
             applyPlan(ni, nc, sub)
             subPlans.push(sub)
@@ -572,7 +787,12 @@ function planGetItem(inv, chestInv, item, count, depth, visited) {
         if (!ok) continue
         let plan = []
         for (let s of subPlans) plan = plan.concat(s)
-        plan.push({ a: 'craft', recipe: r.id })
+        if (r.at === 'cursedInfuser' || r.at === 'water') {
+            // 诅咒注入器/装水：一次只能处理一个
+            for (let i = 0; i < times; i++) plan.push({ a: 'craft', recipe: r.id })
+        } else {
+            plan.push({ a: 'craft', recipe: r.id, count: times })
+        }
         return plan
     }
     // 打磨（砂纸耐久 8）
@@ -657,6 +877,7 @@ function describeStep(step) {
     }
     if (step.a === 'polish') return '打磨 ' + step.rough
     if (step.a === 'enchant') return '附魔'
+    if (step.a === 'deposit') return '存 ' + step.item
     return step.a
 }
 
@@ -683,17 +904,114 @@ function executeStep(entity, inv, pos, step) {
         let times = step.count || 1
         let enough = true
         for (let k in r.in) if ((inv[k] || 0) < r.in[k] * times) { enough = false; break }
+        if (r.tool && (inv[r.tool] || 0) < 1) enough = false // 工具（不消耗）需在背包
         if (enough) {
             for (let k in r.in) removeInv(inv, k, r.in[k] * times)
-            for (let k in r.out) addInv(inv, k, r.out[k] * times)
-            debugItem(entity, r.name + (times > 1 ? ' x' + times : ''))
+            // 手上持有正在处理的物品/工具
+            setHeldItem(entity, r.tool || Object.keys(r.in)[0] || Object.keys(r.out)[0])
+            if (r.make) {
+                // NBT 产物：直接存入箱子
+                let chest = getStorageChest(level, pos)
+                let outKey = Object.keys(r.out)[0]
+                for (let i = 0; i < times; i++) {
+                    let stack = r.make()
+                    if (chest) {
+                        let slot = findEmptySlot(chest)
+                        if (slot !== -1) {
+                            chest.setItem(slot, stack)
+                            continue
+                        }
+                    }
+                    // 箱子满/无箱子：暂存背包（丢 NBT）
+                    addInv(inv, outKey, 1)
+                }
+                debugItem(entity, r.name + (times > 1 ? ' x' + times : ''))
+            } else {
+                for (let k in r.out) addInv(inv, k, r.out[k] * times)
+                debugItem(entity, r.name + (times > 1 ? ' x' + times : ''))
+            }
         }
     } else if (step.a === 'polish') {
         polishGems(inv, entity)
         debugItem(entity, '打磨 ' + step.rough)
     } else if (step.a === 'enchant') {
         enchant(level, inv, entity, pos)
+    } else if (step.a === 'deposit') {
+        let chest = getStorageChest(level, pos)
+        if (chest) {
+            let have = inv[step.item] || 0
+            if (have > 0) {
+                let left = depositStackToContainer(chest, step.item, have)
+                let put = have - left
+                if (put > 0) {
+                    removeInv(inv, step.item, put)
+                    debugItem(entity, '存 ' + put + 'x ' + step.item)
+                }
+            }
+        }
     }
+}
+
+// 诅咒注入器步骤（阻塞）：放入输入、拾取产物；返回 true 表示步骤完成
+function doCursedInfuserStep(entity, inv, pos, recipe) {
+    let level = entity.level
+    let be = getContainerAt(level, pos.cursedInfuser)
+    if (!be) return true
+    let did = []
+    let collected = collectNearbyItems(level, inv, pos.cursedInfuser, did)
+    if (collected > 0) {
+        if (did.length) debugItem(entity, '诅咒注入器 ' + did.join(', '))
+        return true
+    }
+    let input = be.getItem(0)
+    if (input.isEmpty()) {
+        let mid = findInv(inv, Object.keys(recipe.in))
+        if (mid) {
+            removeInv(inv, mid, 1)
+            be.setItem(0, Item.of(mid))
+            did.push('放入 ' + mid)
+        } else {
+            if (did.length) debugItem(entity, '诅咒注入器 ' + did.join(', '))
+            return true
+        }
+    }
+    if (did.length) debugItem(entity, '诅咒注入器 ' + did.join(', '))
+    return false
+}
+
+// 找水源（水方块或装满水的炼药锅），返回 [x, y, z] 或 null
+function findWaterSource(level, entity) {
+    let bx = Math.floor(entity.x), by = Math.floor(entity.y), bz = Math.floor(entity.z)
+    for (let dy = -FARM_RANGE; dy <= FARM_RANGE; dy++)
+        for (let dz = -FARM_RANGE; dz <= FARM_RANGE; dz++)
+            for (let dx = -FARM_RANGE; dx <= FARM_RANGE; dx++) {
+                let x = bx + dx, y = by + dy, z = bz + dz
+                let bc = level.getBlock(x, y, z)
+                if (!bc) continue
+                if (bc.id === 'minecraft:water' || bc.id === 'minecraft:water_cauldron') return [x, y, z]
+            }
+    return null
+}
+
+// 装水：消耗水源，空桶 -> 水桶
+function doFillBucketStep(level, inv, entity, water, recipe) {
+    let x = water[0], y = water[1], z = water[2]
+    let bc = level.getBlock(x, y, z)
+    if (!bc) return
+    // 消耗水
+    if (bc.id === 'minecraft:water') {
+        bc.set('minecraft:air')
+    } else if (bc.id === 'minecraft:water_cauldron') {
+        let props = bc.getProperties()
+        let lvl = parseInt(props.get('level') || '3')
+        if (lvl <= 1) bc.set('minecraft:cauldron')
+        else bc.set('minecraft:water_cauldron', { level: String(lvl - 1) })
+    }
+    // 装水
+    for (let k in recipe.in) removeInv(inv, k, recipe.in[k])
+    for (let k in recipe.out) addInv(inv, k, recipe.out[k])
+    setHeldItem(entity, 'minecraft:bucket')
+    debugItem(entity, '装水')
 }
 
 // 执行计划中的下一步（返回 true 表示正在执行计划）
@@ -704,7 +1022,7 @@ function stepPlan(entity, inv, pos) {
     let level = entity.level
     let targetPos = null
     let navTask = ''
-    if (step.a === 'take') {
+    if (step.a === 'take' || step.a === 'deposit') {
         targetPos = pos.chest || pos.raiderChest
         navTask = '前往箱子'
     } else if (step.a === 'craft') {
@@ -712,6 +1030,19 @@ function stepPlan(entity, inv, pos) {
         if (r && r.at === 'workstation') {
             targetPos = pos.workstation
             navTask = '前往工作台'
+        } else if (r && r.at === 'cursedInfuser') {
+            targetPos = pos.cursedInfuser
+            navTask = '前往诅咒注入器'
+        } else if (r && r.at === 'water') {
+            let water = findWaterSource(level, entity)
+            if (!water) {
+                plan.shift()
+                setPlan(entity, plan)
+                setTask(entity, '附近没有水源')
+                return true
+            }
+            targetPos = water
+            navTask = '前往水源'
         }
     } else if (step.a === 'enchant') {
         targetPos = pos.enchantingTable
@@ -727,6 +1058,31 @@ function stepPlan(entity, inv, pos) {
             return true
         }
     }
+    // 诅咒注入器：阻塞步骤
+    if (step.a === 'craft') {
+        let r = recipeById(step.recipe)
+        if (r && r.at === 'cursedInfuser') {
+            let done = doCursedInfuserStep(entity, inv, pos, r)
+            if (done) plan.shift()
+            setPlan(entity, plan)
+            setTask(entity, '注入 ' + r.name)
+            return true
+        }
+        if (r && r.at === 'water') {
+            let water = findWaterSource(level, entity)
+            if (!water) {
+                plan.shift()
+                setPlan(entity, plan)
+                setTask(entity, '附近没有水源')
+                return true
+            }
+            doFillBucketStep(level, inv, entity, water, r)
+            plan.shift()
+            setPlan(entity, plan)
+            setTask(entity, '装水')
+            return true
+        }
+    }
     executeStep(entity, inv, pos, step)
     plan.shift()
     setPlan(entity, plan)
@@ -738,6 +1094,18 @@ function stepPlan(entity, inv, pos) {
 function thinkAndPlan(entity, inv, pos) {
     let level = entity.level
     let chestInv = getChestInvMap(level, pos)
+    // 基座过滤：仅制作基座上的物品
+    let pedestalItem = getPedestalItem(level, pos)
+    if (pedestalItem && pedestalTargets[pedestalItem]) {
+        let plan = planGetItem(inv, chestInv, pedestalItem, 1, 0, [], true)
+        if (plan && plan.length) {
+            plan.push({ a: 'deposit', item: pedestalItem, count: 1 })
+            setPlan(entity, plan)
+            setTask(entity, '思考 ' + plan.map(describeStep).join(' → '))
+            return true
+        }
+        return false
+    }
     if (pos.enchantingTable) {
         let plan = planEnchant(inv, chestInv)
         if (plan && plan.length) {
@@ -758,13 +1126,18 @@ function thinkAndPlan(entity, inv, pos) {
 }
 
 // ---------- 寻路 ----------
-const positionPriority = ['hopper', 'chest', 'raiderChest', 'furnace', 'workstation']
+const positionPriority = ['hopper', 'chest', 'raiderChest', 'furnace', 'workstation', 'cursedInfuser']
 const WORK_DIST_SQ = 6.25 // 约 2.5 格内视为到达
 const FURNACE_OUTPUT_THRESHOLD = 16 // 熔炉产物攒够 16 个才取一次
 
 function needsWork(level, inv, pos, key) {
     let p = pos[key]
     if (!p) return false
+    // 基座过滤时，禁用专注队列的诅咒注入器/工作台（改由规划系统处理）
+    let pedestalItem = getPedestalItem(level, pos)
+    if (pedestalItem && pedestalTargets[pedestalItem]) {
+        if (key === 'cursedInfuser' || key === 'workstation') return false
+    }
     // 工作台/附魔台不是容器方块实体，无需容器判定
     if (key === 'workstation') {
         for (let ingot in mineralBlocks) if ((inv[ingot] || 0) >= 9) return true
@@ -794,7 +1167,10 @@ function needsWork(level, inv, pos, key) {
             // 只取未附魔的工作物品（与 useRaiderChest 取物过滤保持一致，避免死循环）
             for (let i = 0; i < be.getContainerSize(); i++) {
                 let s = be.getItem(i)
-                if (!s.isEmpty() && isWorkItem(s.id) && !s.isEnchanted()) return true
+                if (!s.isEmpty() && isWorkItem(s.id) && !s.isEnchanted()) {
+                    if (itemReserve[s.id] !== undefined && (inv[s.id] || 0) >= itemReserve[s.id]) continue
+                    return true
+                }
             }
             return false
         case 'furnace':
@@ -804,6 +1180,10 @@ function needsWork(level, inv, pos, key) {
             let furnaceInput = be.getItem(0)
             if (furnaceInput.isEmpty()) return findInv(inv, smeltables) !== null
             return furnaceInput.count < 64 && !!inv[furnaceInput.id]
+        case 'cursedInfuser':
+            // 输入为空且有可注入材料，或附近有掉落产物
+            if (be.getItem(0).isEmpty() && findInv(inv, cursedInfuserInputs)) return true
+            return hasNearbyItems(level, p)
     }
     return false
 }
@@ -817,6 +1197,7 @@ function doWork(entity, inv, pos, key) {
         case 'furnace': useFurnace(level, inv, pos[key], entity); break
         case 'workstation': useWorkstation(inv, entity); break
         case 'enchantingTable': enchant(level, inv, entity, pos); break
+        case 'cursedInfuser': useCursedInfuser(level, inv, pos[key], entity); break
     }
 }
 
@@ -855,6 +1236,12 @@ function debugItem(entity, msg) {
     }
 }
 
+// 让学徒在手上持有物品
+function setHeldItem(entity, id) {
+    if (!id) return
+    try { entity.setMainHandItem(Item.of(id)) } catch (e) {}
+}
+
 // 背包内容转字符串
 function formatInv(inv) {
     let parts = []
@@ -878,9 +1265,17 @@ global.apprenticeAI = (entity) => {
 
     // 背景工序：砂纸打磨（无需方块）
     polishGems(inv, entity)
+    // 背景工序：把超出保留数量的工作物品存回箱子
+    depositSurplus(entity, inv, pos)
 
     // 农田：搜索 8 格内成熟作物/紫水晶簇并处理（优先于专注队列）
     if (handleFarming(entity, inv, pos)) {
+        writeInv(entity, inv)
+        return
+    }
+
+    // 种植盆：搜索 8 格内种植盆的成熟作物并收割补种
+    if (handlePlanterFarming(entity, inv, pos)) {
         writeInv(entity, inv)
         return
     }
@@ -927,7 +1322,6 @@ global.apprenticeAI = (entity) => {
         return
     }
 
-    useCursedInfuserNearby(entity, inv)
     let assigned = Object.keys(pos)
     let chestInfo = ''
     if (pos.chest) {
@@ -946,35 +1340,78 @@ global.apprenticeAI = (entity) => {
     writeInv(entity, inv)
 }
 
-// 诅咒注入器（按实体坐标附近搜索）
-function useCursedInfuserNearby(entity, inv) {
-    /*let level = entity.level
-    for (let dx = -8; dx <= 8; dx++) {
-        for (let dy = -8; dy <= 8; dy++) {
-            for (let dz = -8; dz <= 8; dz++) {
-                let be = level.getBlockEntity(new BlockPos(entity.x + dx, entity.y + dy, entity.z + dz))
-                if (!be) continue
-                let blockId = level.getBlock(entity.x + dx, entity.y + dy, entity.z + dz).id
-                if (blockId !== 'goety:cursed_infuser') continue
-                drainContainerSlot(level, inv, [entity.x + dx, entity.y + dy, entity.z + dz], 1)
-                let input = be.getItem(0)
-                if (input.isEmpty()) {
-                    let mid = findInv(inv, cursedInfuserInputs)
-                    if (mid) {
-                        removeInv(inv, mid, 1)
-                        be.setItem(0, Item.of(mid))
-                    }
-                }
-                return
+// 拾取诅咒注入器附近掉落的产物，返回拾取数量
+function collectNearbyItems(level, inv, pos, did) {
+    let x = pos[0] + 0.5, y = pos[1] + 0.5, z = pos[2] + 0.5
+    let aabb = new $AABB(x - 3, y - 3, z - 3, x + 3, y + 3, z + 3)
+    let list = level.getEntitiesWithin(aabb)
+    let count = 0
+    for (let e of list) {
+        if (e.type === 'minecraft:item') {
+            let stack = e.item
+            if (stack && stack.count > 0) {
+                addInv(inv, stack.id, stack.count)
+                did.push('拾取 ' + stack.count + 'x ' + stack.id)
+                count += stack.count
             }
+            e.discard()
         }
-    }*/
-   return; //别动！ bug
+    }
+    return count
+}
+function hasNearbyItems(level, pos) {
+    let x = pos[0] + 0.5, y = pos[1] + 0.5, z = pos[2] + 0.5
+    let aabb = new $AABB(x - 3, y - 3, z - 3, x + 3, y + 3, z + 3)
+    let list = level.getEntitiesWithin(aabb)
+    for (let e of list) {
+        if (e.type === 'minecraft:item') return true
+    }
+    return false
+}
+
+// 诅咒注入器（使用注册位置；只有 1 个输入槽，产物会掉落为物品实体）
+function useCursedInfuser(level, inv, pos, entity) {
+    let be = getContainerAt(level, pos)
+    if (!be) return
+    let did = []
+    // 拾取附近掉落的产物
+    collectNearbyItems(level, inv, pos, did)
+    // 输入槽为空时放入材料
+    let input = be.getItem(0)
+    if (input.isEmpty()) {
+        let mid = findInv(inv, cursedInfuserInputs)
+        if (mid) {
+            removeInv(inv, mid, 1)
+            be.setItem(0, Item.of(mid))
+            did.push('放入 ' + mid)
+        }
+    }
+    if (did.length) debugItem(entity, '诅咒注入器 ' + did.join(', '))
 }
 
 // ---------- 服务器 tick 循环 ----------
+// 让学徒身体/头部朝向移动方向（修复无法转身）
+function updateApprenticeRotation(entity) {
+    try {
+        let mx = entity.getMotionX()
+        let mz = entity.getMotionZ()
+        if (mx * mx + mz * mz > 0.0001) {
+            let yaw = Math.atan2(mz, mx) * 180 / Math.PI - 90
+            entity.setYRot(yaw)
+            entity.yBodyRot = yaw
+            entity.yHeadRot = yaw
+        }
+    } catch (e) {}
+}
+
 let apprenticeTick = 0
 ServerEvents.tick(event => {
+    // 每 tick 更新朝向
+    event.server.entities.forEach(entity => {
+        if (entity.type !== 'kubejs:apprentice') return
+        updateApprenticeRotation(entity)
+    })
+
     apprenticeTick++
     if (apprenticeTick % 20 !== 0) return
     apprenticeTick = 0

@@ -65,6 +65,28 @@
 					}
 				}
 			}
+		},
+		"interact": {
+			"loop": false,
+			"animation_length": 0.6,
+			"bones": {
+				"arms": {
+					"rotation": {
+						"0.0": {"vector": [-42.97, 0, 0]},
+						"0.15": {"vector": [-105, 0, 0]},
+						"0.45": {"vector": [-105, 0, 0]},
+						"0.6": {"vector": [-42.97, 0, 0]}
+					}
+				},
+				"head": {
+					"rotation": {
+						"0.0": {"vector": [0, 0, 0]},
+						"0.15": {"vector": [25, 0, 0]},
+						"0.45": {"vector": [25, 0, 0]},
+						"0.6": {"vector": [0, 0, 0]}
+					}
+				}
+			}
 		}
 	},
 	"geckolib_format_version": 2
