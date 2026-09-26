@@ -1390,28 +1390,8 @@ function useCursedInfuser(level, inv, pos, entity) {
 }
 
 // ---------- 服务器 tick 循环 ----------
-// 让学徒身体/头部朝向移动方向（修复无法转身）
-function updateApprenticeRotation(entity) {
-    try {
-        let mx = entity.getMotionX()
-        let mz = entity.getMotionZ()
-        if (mx * mx + mz * mz > 0.0001) {
-            let yaw = Math.atan2(mz, mx) * 180 / Math.PI - 90
-            entity.setYRot(yaw)
-            entity.yBodyRot = yaw
-            entity.yHeadRot = yaw
-        }
-    } catch (e) {}
-}
-
 let apprenticeTick = 0
 ServerEvents.tick(event => {
-    // 每 tick 更新朝向
-    event.server.entities.forEach(entity => {
-        if (entity.type !== 'kubejs:apprentice') return
-        updateApprenticeRotation(entity)
-    })
-
     apprenticeTick++
     if (apprenticeTick % 20 !== 0) return
     apprenticeTick = 0
