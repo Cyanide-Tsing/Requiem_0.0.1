@@ -371,6 +371,8 @@
   "item.kubejs.alphabet":"破译机",
   "item.kubejs.scribble_table":"抄写台",
   "item.kubejs.makeshift_notebook":"简易笔记",
+  "item.kubejs.smelt_list":"烧炼列表",
+  "item.kubejs.store_list":"存储列表",
 
   "kubejs.tooltip.sculptor_staff":"§7远非完美§r",
   "kubejs.casting.none":"似乎你该往上面写点东西，而不是直接使用它……",

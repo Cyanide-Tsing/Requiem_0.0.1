@@ -1,8 +1,8 @@
 const $Neollager = Java.loadClass('com.Polarice3.Goety.common.entities.ally.illager.Neollager')
 
-let animLog = 0
 let rotLog = 0
 let rotPrev = {}
+let bodyYaw = {}
 
 // KubeJS 的 Math.atan2 返回 NaN，用 8 方向查表代替。
 // 返回 Minecraft 偏航角：0=南(+Z)，90=西(-X)，180/-180=北(-Z)，-90=东(+X)。
@@ -18,11 +18,20 @@ function yawFromDelta(dx, dz) {
     return 135
 }
 
+// 把角度差折叠到 [-180, 180]
+function wrapDegrees(d) {
+    d = d % 360
+    if (d > 180) d -= 360
+    if (d < -180) d += 360
+    return d
+}
+
 StartupEvents.registry('entity_type', event => {
-    event.createCustom('apprentice', $Neollager, modifyBuilder => {
+    let builder = event.createCustom('apprentice', $Neollager, modifyBuilder => {
         modifyBuilder.mobInteract(ctx => global.apprenticeInteract(ctx))
-        // 服务端：在实体 tick 末尾把头/身体朝向对齐到移动方向。
-        // KubeJS 里 setYRot 要用 setYaw，但 setYHeadRot / setYBodyRot 名字不变。
+        // 服务端：在实体 tick 末尾设置朝向。
+        // 原版渲染器按 yBodyRot 转身体、按 (yHeadRot - yBodyRot) 转头，
+        // 所以这里头立即转向目标、身体逐渐跟上，实现“先转头、身体跟上”。
         modifyBuilder.tick(entity => {
             if (entity.level.isClientSide()) return
             try {
@@ -32,12 +41,19 @@ StartupEvents.registry('entity_type', event => {
                 if (prev) {
                     let dx = x - prev[0], dz = z - prev[1]
                     if (dx * dx + dz * dz > 0.0001) {
-                        let yaw = yawFromDelta(dx, dz)
-                        if (yaw !== null) {
-                            entity.setYHeadRot(yaw)
-                            entity.setYBodyRot(yaw)
+                        let target = yawFromDelta(dx, dz)
+                        if (target !== null) {
+                            entity.setYHeadRot(target)
+                            let current = bodyYaw[id]
+                            if (current === undefined) current = target
+                            let diff = wrapDegrees(target - current)
+                            let maxRot = 15
+                            if (diff > maxRot) diff = maxRot
+                            else if (diff < -maxRot) diff = -maxRot
+                            bodyYaw[id] = current + diff
+                            entity.setYBodyRot(bodyYaw[id])
                             rotLog++
-                            if (rotLog % 40 === 0) console.log('[apprentice rot] yaw=' + yaw)
+                            if (rotLog % 40 === 0) console.log('[apprentice rot] target=' + target + ' body=' + bodyYaw[id])
                         }
                     }
                 }
@@ -48,47 +64,11 @@ StartupEvents.registry('entity_type', event => {
             }
         })
     })
-        .sized(0.6, 1.9)
+
+    builder.sized(0.6, 1.95)
         .mobCategory('creature')
         .clientTrackingRange(16)
         .updateInterval(3)
-        .modelResource(entity => 'kubejs:geo/entity/villager.geo.json')
-        .textureResource(entity => 'kubejs:textures/entity/apprentice.png')
-        .animationResource(entity => 'kubejs:animations/entity/apprentice.animation.json')
-        .addAnimationController('controller', 1, event => {
-            let moving = false
-            try {
-                let e = event.getEntity()
-                // 若渲染用的是 WrappedAnimatableEntity 包装，取其原始实体
-                let real = e
-                if (e.getOriginalEntity) {
-                    try { real = e.getOriginalEntity() } catch (e2) {}
-                }
-                // 用 goety 仆从自带的 isMoving()：内部是 WalkAnimationState.speed() >= 0.01，
-                // 基于实际位移而非速度，能区分「走路」和「有 Goal 但原地漂移」。
-                moving = real.isMoving()
-                animLog++
-                if (animLog % 100 === 0) console.log('[apprentice anim] moving=' + moving + ' x=' + real.x + ' z=' + real.z)
-            } catch (err) {
-                moving = event.isMoving()
-                animLog++
-                if (animLog % 100 === 0) console.log('[apprentice anim] ERR ' + err)
-            }
-            if (moving) {
-                event.thenLoop('walk')
-            } else {
-                event.thenLoop('idle')
-            }
-            return true
-        })
-        .addTriggerableAnimationController('interact', 1, 'interact', 'interact', 'PLAY_ONCE')
-        .scaleModelForRender(ctx => {
-            // 关键修复：EntityJS 0.6.6 的 CustomKubeJSEntityRenderer 把实体包成 WrappedAnimatableEntity，
-            // 它不转发 yBodyRot/yHeadRot，导致 GeoEntityRenderer 读到 0，模型永远按 180-0=180 渲染（平移）。
-            // 这里在 applyRotations 之前，用未包装的原始实体把正确的偏航角补回来。
-            try {
-                let yaw = ctx.entity.getViewYRot(ctx.partialTick)
-                ctx.poseStack.mulPose(RotationAxis.YP.deg(-yaw))
-            } catch (e) {}
-        })
+        // 换成新刌民（Neollager）的原版渲染器：能正确转头/抬头，代价是失去自定义 GeckoLib 贴图/动画。
+        .setRendererClass('com.Polarice3.Goety.client.render.NeollagerRenderer')
 })

@@ -24,4 +24,7 @@ StartupEvents.registry('item', event=>{
                 .fastToEat()
             }
         );
+
+    event.create('kubejs:smelt_list').maxStackSize(1)
+    event.create('kubejs:store_list').maxStackSize(1)
 })

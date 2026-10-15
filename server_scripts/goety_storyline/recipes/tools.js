@@ -5,4 +5,5 @@ ServerEvents.recipes(event=>{
 ServerEvents.tags('item', event=>{
     event.add('minecraft:pickaxes', 'kubejs:pale_metal_pickaxe')
     event.add('forge:tools/pickaxes', 'kubejs:pale_metal_pickaxe')
+    event.add('minecraft:cluster_max_harvestables', 'kubejs:pale_metal_pickaxe')
 })

@@ -2,6 +2,7 @@ const $WaystoneItem = Java.loadClass('com.Polarice3.Goety.common.items.WaystoneI
 const $EnchantmentHelper = Java.loadClass('net.minecraft.world.item.enchantment.EnchantmentHelper')
 const $ItemStack = Java.loadClass('net.minecraft.world.item.ItemStack')
 const $AABB = Java.loadClass('net.minecraft.world.phys.AABB')
+const $ComposterBlock = Java.loadClass('net.minecraft.world.level.block.ComposterBlock')
 
 // 矿物块合成表（9 锭 -> 1 块）
 const mineralBlocks = {
@@ -46,9 +47,11 @@ const recipes = (function () {
         list.push({ id: 'decompose_' + block, in: o(block, 1), out: o(ingot, 9), at: 'workstation', name: '分解 ' + block })
     }
     list.push({ id: 'sandpaper', in: { 'minecraft:paper': 1, 'minecraft:sand': 1 }, out: { 'create:sand_paper': 1 }, at: 'workstation', name: '合成砂纸' })
+    list.push({ id: 'rough_diamond_from_shards', in: { 'spelunkery:rough_diamond_shard': 9}, out: { 'spelunkery:rough_diamond': 1 }, at: 'workstation', name: '合成粗钻石' })
     list.push({ id: 'snap_seed', in: { 'goety:snap_fungus': 1 }, out: { 'goety:snap_warts': 4 }, at: 'workstation', name: '合成砰砰菌种子' })
     list.push({ id: 'netherite', in: { 'minecraft:netherite_scrap': 4, 'minecraft:gold_ingot': 4 }, out: { 'minecraft:netherite_ingot': 1 }, at: 'workstation', name: '合成下界合金' })
     // 工具合成
+    list.push({ id: 'sticks', in: { 'minecraft:oak_planks': 2 }, out: { 'minecraft:stick': 4 }, at: 'workstation', name: '合成木棍' })
     list.push({ id: 'iron_pickaxe', in: { 'minecraft:iron_ingot': 3, 'minecraft:stick': 2 }, out: { 'minecraft:iron_pickaxe': 1 }, at: 'workstation', name: '合成铁镐' })
     list.push({ id: 'pale_steel_pickaxe', in: { 'goety:pale_steel_ingot': 3, 'minecraft:stick': 2 }, out: { 'kubejs:pale_metal_pickaxe': 1 }, at: 'workstation', name: '合成苍白钢镐',
         make: () => Item.of('kubejs:pale_metal_pickaxe', '{Damage:0}').enchant('minecraft:unbreaking', 4).enchant('minecraft:efficiency', 3).enchant('minecraft:fortune', 4) })
@@ -89,12 +92,19 @@ const pedestalTargets = {
     'kubejs:wart_bread': 'wart_bread'
 }
 
-// 可烧炼的矿物（矿石/粗金属）
+// 高炉输入（矿石/粗金属，烧炼更快）
 const smeltables = [
     'minecraft:iron_ore', 'minecraft:deepslate_iron_ore', 'minecraft:raw_iron',
     'minecraft:gold_ore', 'minecraft:deepslate_gold_ore', 'minecraft:raw_gold',
     'minecraft:copper_ore', 'minecraft:deepslate_copper_ore', 'minecraft:raw_copper',
     'minecraft:ancient_debris', 'minecraft:nether_gold_ore'
+]
+
+// 烟熏炉输入（肉类/食物，烧炼更快）
+const smokerInputs = [
+    'minecraft:beef', 'minecraft:porkchop', 'minecraft:chicken',
+    'minecraft:mutton', 'minecraft:rabbit', 'minecraft:cod',
+    'minecraft:salmon', 'minecraft:potato', 'minecraft:kelp'
 ]
 
 // 燃料
@@ -144,6 +154,21 @@ const itemReserve = {
 }
 for (let s in planterSeedReserve) itemReserve[s] = planterSeedReserve[s]
 
+// 可堆肥的种子（箱子+身上合计超过一组后，多余的投入堆肥桶）
+const seedItems = [
+    'minecraft:wheat_seeds',
+    'minecraft:beetroot_seeds',
+    'farmersdelight:cabbage_seeds',
+    'farmersdelight:tomato_seeds',
+    'minecraft:carrot',
+    'minecraft:potato',
+    'farmersdelight:onion',
+    'farmersdelight:rice'
+]
+
+// 粗钻石碎片（9 碎片 -> 1 粗钻石）的输入，需要作为工作物品保留
+const roughGemShards = ['spelunkery:rough_diamond_shard']
+
 
 // ---------- 库存（JSON 存于 NBT） ----------
 function readInv(entity) {
@@ -170,14 +195,41 @@ function findInv(inv, list) {
     return null
 }
 
+// ---------- 可烧炼物品分类 ----------
+function isBlastInput(id) { return smeltables.indexOf(id) !== -1 }
+function isSmokerInput(id) { return smokerInputs.indexOf(id) !== -1 }
+function isSmeltable(id) { return isBlastInput(id) || isSmokerInput(id) }
+// 根据方块类型返回炉型：'blast' | 'smoker' | 'furnace'
+function furnaceTypeOf(level, p) {
+    if (!p) return 'furnace'
+    let bc = level.getBlock(p[0], p[1], p[2])
+    if (!bc) return 'furnace'
+    if (bc.id === 'minecraft:blast_furnace') return 'blast'
+    if (bc.id === 'minecraft:smoker') return 'smoker'
+    return 'furnace'
+}
+// 从背包中为指定炉型找一个可烧炼物品
+function findFurnaceInput(inv, type) {
+    if (type === 'blast') {
+        for (let id of smeltables) if ((inv[id] || 0) > 0) return id
+    } else if (type === 'smoker') {
+        for (let id of smokerInputs) if ((inv[id] || 0) > 0) return id
+    } else {
+        for (let id of smeltables) if ((inv[id] || 0) > 0) return id
+        for (let id of smokerInputs) if ((inv[id] || 0) > 0) return id
+    }
+    return null
+}
+
 // 学徒“会用到/保留”的物品（其余才会存进箱子）
 function isWorkItem(id) {
     return !!(polishMap[id] || mineralBlocks[id] ||
-        smeltables.indexOf(id) !== -1 || fuels.indexOf(id) !== -1 ||
+        isSmeltable(id) || fuels.indexOf(id) !== -1 ||
         cursedInfuserInputs.indexOf(id) !== -1 || isEnchantable(id) ||
         id === 'minecraft:paper' || id === 'minecraft:sand' ||
         id === 'create:sand_paper' || id === 'minecraft:lapis_lazuli' ||
         id === 'goety:snap_warts' || id === 'goety:snap_fungus' ||
+        roughGemShards.indexOf(id) !== -1 ||
         planterSeedReserve[id] !== undefined || toolItems.indexOf(id) !== -1)
 }
 
@@ -218,11 +270,75 @@ function drainContainerSlot(level, inv, pos, slot) {
     }
 }
 
+// ---------- 列表物品（烧炼列表 / 存储列表）记录位置 ----------
+function listPositions(stack) {
+    try {
+        if (!stack.nbt) return []
+        let s = stack.nbt.getString('positions')
+        return s ? JSON.parse(s) : []
+    } catch (e) { return [] }
+}
+function setListPositions(stack, arr) {
+    try {
+        let nbt = null
+        if (typeof stack.getOrCreateTag === 'function') nbt = stack.getOrCreateTag()
+        if (!nbt && stack.nbt) nbt = stack.nbt
+        if (nbt && typeof nbt.putString === 'function') nbt.putString('positions', JSON.stringify(arr))
+    } catch (e) {}
+}
+function addListPosition(stack, p) {
+    let arr = listPositions(stack)
+    for (let q of arr) if (q[0] === p[0] && q[1] === p[1] && q[2] === p[2]) return arr
+    arr.push([p[0], p[1], p[2]])
+    setListPositions(stack, arr)
+    return arr
+}
+
+// 右键方块：把方块位置记录进列表物品
+BlockEvents.rightClicked(event => {
+    let player = event.player
+    if (!player || player.level.isClientSide()) return
+    let held = player.mainHandItem
+    if (held.id === 'kubejs:smelt_list') {
+        let bid = event.block.id
+        if (bid === 'minecraft:furnace' || bid === 'minecraft:blast_furnace' || bid === 'minecraft:smoker') {
+            let arr = addListPosition(held, [event.block.x, event.block.y, event.block.z])
+            player.tell('已记录熔炉，共 ' + arr.length + ' 个')
+            try { event.cancel() } catch (e) {}
+        }
+    } else if (held.id === 'kubejs:store_list') {
+        if (event.block.id === 'minecraft:barrel') {
+            let arr = addListPosition(held, [event.block.x, event.block.y, event.block.z])
+            player.tell('已记录木桶，共 ' + arr.length + ' 个')
+            try { event.cancel() } catch (e) {}
+        }
+    }
+})
+
 // ---------- 指路石交互 ----------
 global.apprenticeInteract = (ctx) => {
     const { entity, player } = ctx
     if (!player || player.level.isClientSide()) return
     let held = player.mainHandItem
+
+    // 列表物品：应用记录的位置到学徒（清除旧位置并替换）
+    if (held.id === 'kubejs:smelt_list') {
+        let list = listPositions(held)
+        let pos = readPositions(entity)
+        pos.furnaces = list.map(p => [p[0], p[1], p[2]])
+        writePositions(entity, pos)
+        player.tell('已设置学徒 ' + list.length + ' 个熔炉位置')
+        return
+    }
+    if (held.id === 'kubejs:store_list') {
+        let list = listPositions(held)
+        let pos = readPositions(entity)
+        pos.barrels = list.map(p => [p[0], p[1], p[2]])
+        writePositions(entity, pos)
+        player.tell('已设置学徒 ' + list.length + ' 个木桶位置')
+        return
+    }
+
     if (held.id !== 'goety:waystone') held = player.offHandItem
     if (held.id !== 'goety:waystone') return
     if (!$WaystoneItem.hasBlock(held)) return
@@ -241,28 +357,33 @@ global.apprenticeInteract = (ctx) => {
     else if (blockId === 'supplementaries:pedestal' || blockId === 'goety:pedestal') key = 'pedestal'
     else if (blockId === 'goety:raiding_chest') key = 'raiderChest'
     else if (blockId === 'minecraft:chest' || blockId === 'minecraft:trapped_chest' || blockId === 'minecraft:barrel') key = 'chest'
+    else if (blockId === 'minecraft:composter') key = 'composter'
 
     if (!key) {
         player.tell('学徒无法使用该方块')
         return
     }
     let pos = readPositions(entity)
-    pos[key] = [x, y, z]
+    if (key === 'furnace') {
+        pos.furnaces = [[x, y, z]]
+    } else {
+        pos[key] = [x, y, z]
+    }
     writePositions(entity, pos)
     player.tell('已设置学徒的 ' + key + ' 位置')
 }
 
-// ---------- 行为：袭击者箱子存取 ----------
+// ---------- 行为：袭击者箱子/箱子/木桶存取 ----------
 function useRaiderChest(level, inv, pos, entity) {
-    let be = getContainerAt(level, pos)
-    if (!be) return
+    let containers = getStorageContainers(level, pos)
+    if (!containers.length) return
     let did = []
     // 打开箱子动画
     try { entity.triggerAnim('interact', 'interact') } catch (e) {}
-    // 把库存里非工作物品存入箱子（合并同类，不超堆叠上限）
+    // 把库存里非工作物品存入（跨所有存储容器，同类/同类别分组）
     for (let id in inv) {
         if (isWorkItem(id)) continue
-        let left = depositStackToContainer(be, id, inv[id])
+        let left = depositToStorage(level, pos, id, inv[id])
         let put = inv[id] - left
         if (put > 0) did.push('存 ' + put + 'x' + id)
         if (left <= 0) delete inv[id]
@@ -271,20 +392,22 @@ function useRaiderChest(level, inv, pos, entity) {
             break
         }
     }
-    // 从箱子取出工作物品；保留数量的物品只取到保留上限（避免存取死循环）
-    for (let i = 0; i < be.getContainerSize(); i++) {
-        let stack = be.getItem(i)
-        if (!stack.isEmpty() && isWorkItem(stack.id) && !stack.isEnchanted()) {
-            let take = stack.count
-            if (itemReserve[stack.id] !== undefined) {
-                let need = itemReserve[stack.id] - (inv[stack.id] || 0)
-                if (need <= 0) continue
-                take = Math.min(stack.count, need)
+    // 从存储容器取出工作物品；保留数量的物品只取到保留上限（避免存取死循环）
+    for (let be of containers) {
+        for (let i = 0; i < be.getContainerSize(); i++) {
+            let stack = be.getItem(i)
+            if (!stack.isEmpty() && isWorkItem(stack.id) && !stack.isEnchanted()) {
+                let take = stack.count
+                if (itemReserve[stack.id] !== undefined) {
+                    let need = itemReserve[stack.id] - (inv[stack.id] || 0)
+                    if (need <= 0) continue
+                    take = Math.min(stack.count, need)
+                }
+                addInv(inv, stack.id, take)
+                if (take < stack.count) be.setItem(i, Item.of(stack.id, stack.count - take))
+                else be.setItem(i, $ItemStack.EMPTY)
+                did.push('取 ' + take + 'x' + stack.id)
             }
-            addInv(inv, stack.id, take)
-            if (take < stack.count) be.setItem(i, Item.of(stack.id, stack.count - take))
-            else be.setItem(i, $ItemStack.EMPTY)
-            did.push('取 ' + take + 'x' + stack.id)
         }
     }
     if (did.length) debugItem(entity, '箱子 ' + did.join(', '))
@@ -323,13 +446,118 @@ function depositStackToContainer(be, id, count) {
     return count
 }
 function getStorageChest(level, pos) {
-    for (let key of ['chest', 'raiderChest']) {
-        if (pos[key]) {
-            let be = getContainerAt(level, pos[key])
-            if (be) return be
-        }
+    return getStorageContainers(level, pos)[0] || null
+}
+
+// 存储容器列表（木桶 + 箱子 + 袭击者箱子，去重）
+function getStorageContainers(level, pos) {
+    let list = []
+    let seen = {}
+    function add(p) {
+        if (!p) return
+        let key = p[0] + ',' + p[1] + ',' + p[2]
+        if (seen[key]) return
+        seen[key] = true
+        let be = getContainerAt(level, p)
+        if (be) list.push(be)
     }
+    if (pos.barrels) for (let p of pos.barrels) add(p)
+    if (pos.chest) add(pos.chest)
+    if (pos.raiderChest) add(pos.raiderChest)
+    return list
+}
+
+// 返回一个用于导航的存储位置（木桶优先）
+function firstStoragePos(pos) {
+    if (pos.barrels && pos.barrels.length) return pos.barrels[0]
+    if (pos.chest) return pos.chest
+    if (pos.raiderChest) return pos.raiderChest
     return null
+}
+
+// ---------- 物品分类（用于木桶分组）：7 大类 ----------
+// 1 矿物（粒/锭/块/宝石/矿石/粉末 + 紫水晶），2 巫法材料，3 工具武器，4 护甲，5 食物，6 作物，7 作物种子
+const goetyMaterials = [
+    'goety:cursed_ingot', 'goety:cursed_metal_block',
+    'goety:pale_steel_ingot', 'goety:pale_steel_block',
+    'goety:empty_focus', 'goety:magic_emerald', 'goety:soul_emerald',
+    'goety:pulverize_focus'
+]
+const amethystItems = ['minecraft:amethyst_shard', 'minecraft:amethyst_block']
+const cropItemIds = [
+    'minecraft:wheat', 'minecraft:carrot', 'minecraft:potato', 'minecraft:beetroot',
+    'farmersdelight:cabbage', 'farmersdelight:onion', 'farmersdelight:tomato', 'farmersdelight:rice',
+    'minecraft:nether_wart', 'goety:snap_fungus', 'goety:snap_warts'
+]
+function itemHasTag(id, tag) {
+    try {
+        let s = Item.of(id)
+        if (!s || s.isEmpty()) return false
+        if (typeof s.hasTag === 'function') {
+            try { if (s.hasTag(tag)) return true } catch (e) {}
+        }
+        if (typeof s.getTags === 'function') {
+            let tags = s.getTags()
+            if (tags) for (let t of tags) if (String(t) === tag) return true
+        }
+    } catch (e) {}
+    return false
+}
+function isToolWeapon(id) {
+    return id.indexOf('sword') !== -1 || id.indexOf('pickaxe') !== -1 || id.indexOf('axe') !== -1 ||
+        id.indexOf('shovel') !== -1 || id.indexOf('hoe') !== -1 || id.indexOf('bow') !== -1
+}
+function isArmor(id) {
+    return id.indexOf('helmet') !== -1 || id.indexOf('chestplate') !== -1 ||
+        id.indexOf('leggings') !== -1 || id.indexOf('boots') !== -1
+}
+const categoryCache = {}
+function categoryOf(id) {
+    if (categoryCache[id] !== undefined) return categoryCache[id]
+    let cat
+    if (goetyMaterials.indexOf(id) !== -1) cat = 'goety'
+    else if (isToolWeapon(id)) cat = 'tool'
+    else if (isArmor(id)) cat = 'armor'
+    else if (id.indexOf('_seeds') !== -1 || itemHasTag(id, 'forge:seeds')) cat = 'seed'
+    else if (cropItemIds.indexOf(id) !== -1 || itemHasTag(id, 'forge:crops')) cat = 'crop'
+    else if (itemHasTag(id, 'forge:foods')) cat = 'food'
+    else if (amethystItems.indexOf(id) !== -1 ||
+        itemHasTag(id, 'forge:nuggets') || itemHasTag(id, 'forge:ingots') ||
+        itemHasTag(id, 'forge:gems') || itemHasTag(id, 'forge:storage_blocks') ||
+        itemHasTag(id, 'forge:ores') || itemHasTag(id, 'forge:raw_materials') ||
+        itemHasTag(id, 'forge:dusts')) cat = 'mineral'
+    else cat = 'item:' + id
+    categoryCache[id] = cat
+    return cat
+}
+// 容器对某物品的匹配度：0=已有同类物品，1=已有同类别，2=空桶，3=有其他物品但有空位，4=已满
+function rankContainer(be, id, cat) {
+    let hasSame = false, hasCat = false, hasOther = false, isEmpty = true
+    for (let i = 0; i < be.getContainerSize(); i++) {
+        let s = be.getItem(i)
+        if (s.isEmpty()) continue
+        isEmpty = false
+        if (s.id === id) hasSame = true
+        else if (categoryOf(s.id) === cat) hasCat = true
+        else hasOther = true
+    }
+    if (hasSame) return 0
+    if (hasCat) return 1
+    if (isEmpty) return 2
+    if (hasOther) return 3
+    return 4
+}
+// 跨多个存储容器存入物品（优先同类/同类别，装满后溢出到别的桶）；返回未存入数量
+function depositToStorage(level, pos, id, count) {
+    let containers = getStorageContainers(level, pos)
+    if (containers.length === 0) return count
+    let cat = categoryOf(id)
+    containers.sort((a, b) => rankContainer(a, id, cat) - rankContainer(b, id, cat))
+    for (let be of containers) {
+        if (count <= 0) break
+        count = depositStackToContainer(be, id, count)
+    }
+    return count
 }
 
 // 读取基座（Pedestal）上的展示物品 id，无则返回 null
@@ -341,14 +569,72 @@ function getPedestalItem(level, pos) {
     return stack && !stack.isEmpty() ? stack.id : null
 }
 
+// 从容器中取出指定数量的物品，返回实际取出数量
+function removeFromContainer(be, id, count) {
+    if (!be) return 0
+    let removed = 0
+    for (let i = 0; i < be.getContainerSize() && removed < count; i++) {
+        let s = be.getItem(i)
+        if (!s.isEmpty() && !s.isEnchanted() && s.id === id) {
+            let take = Math.min(s.count, count - removed)
+            if (take >= s.count) be.setItem(i, $ItemStack.EMPTY)
+            else be.setItem(i, Item.of(id, s.count - take))
+            removed += take
+        }
+    }
+    return removed
+}
+
+// 跨所有存储容器取出指定数量的物品，返回实际取出数量
+function removeFromStorage(level, pos, id, count) {
+    let removed = 0
+    for (let be of getStorageContainers(level, pos)) {
+        if (removed >= count) break
+        removed += removeFromContainer(be, id, count - removed)
+    }
+    return removed
+}
+
+// ---------- 行为：堆肥桶 ----------
+// 箱子 + 身上合计超过一组（64）的种子，把多余的一个投入堆肥桶
+function useComposter(level, inv, pos, entity) {
+    let bc = level.getBlock(pos.composter[0], pos.composter[1], pos.composter[2])
+    if (!bc || bc.id !== 'minecraft:composter') return
+    let cpos = new BlockPos(pos.composter[0], pos.composter[1], pos.composter[2])
+    let props = bc.getProperties()
+    let lvl = parseInt(props.get('level') || '0')
+    // 堆肥桶满（level 8）时取出骨粉（掉落为物品实体后拾取）
+    if (lvl >= 8) {
+        try {
+            $ComposterBlock.extractProduce(entity, bc.getBlockState(), level, cpos)
+        } catch (e) {}
+        let did = []
+        collectNearbyItems(level, inv, pos.composter, did)
+        if (did.length) debugItem(entity, '堆肥桶 ' + did.join(', '))
+        return
+    }
+    if (lvl >= 7) return // 堆肥桶快满（即将产出骨粉）
+    let chestInv = getChestInvMap(level, pos)
+    for (let seedId of seedItems) {
+        let total = (inv[seedId] || 0) + (chestInv[seedId] || 0)
+        if (total <= 64) continue
+        // 优先从存储容器取 1 个种子，否则从背包取
+        let removed = removeFromStorage(level, pos, seedId, 1)
+        if (!removed && !removeInv(inv, seedId, 1)) continue
+        try {
+            $ComposterBlock.insertItem(entity, bc.getBlockState(), level, Item.of(seedId, 1), cpos)
+        } catch (e) {}
+        debugItem(entity, '堆肥 1x ' + seedId)
+        return
+    }
+}
+
 // 定期把背包里非工作物品存入注册箱子（背景工序）
 function depositNonWorkItems(entity, inv, pos) {
-    let chest = getStorageChest(entity.level, pos)
-    if (!chest) return
     let did = []
     for (let id in inv) {
         if (isWorkItem(id)) continue
-        let left = depositStackToContainer(chest, id, inv[id])
+        let left = depositToStorage(entity.level, pos, id, inv[id])
         let put = inv[id] - left
         if (put > 0) did.push(put + 'x ' + id)
         if (left <= 0) delete inv[id]
@@ -359,15 +645,13 @@ function depositNonWorkItems(entity, inv, pos) {
 
 // 把超出保留数量的工作物品存回箱子（背景工序）
 function depositSurplus(entity, inv, pos) {
-    let chest = getStorageChest(entity.level, pos)
-    if (!chest) return
     let did = []
     for (let item in itemReserve) {
         let keep = itemReserve[item]
         let have = inv[item] || 0
         if (have <= keep) continue
         let excess = have - keep
-        let left = depositStackToContainer(chest, item, excess)
+        let left = depositToStorage(entity.level, pos, item, excess)
         let put = excess - left
         inv[item] = keep + left
         if (put > 0) did.push(put + 'x ' + item)
@@ -391,46 +675,112 @@ function useHopper(level, inv, pos, entity) {
     if (did.length) debugItem(entity, '漏斗 ' + did.join(', '))
 }
 
-// ---------- 行为：熔炉 ----------
-function useFurnace(level, inv, pos, entity) {
-    let be = getContainerAt(level, pos)
-    if (!be) return
-    let did = []
-    // 取输出（攒够一批才取）
-    let output = be.getItem(2)
-    if (output.count >= FURNACE_OUTPUT_THRESHOLD) {
-        addInv(inv, output.id, output.count)
-        be.setItem(2, $ItemStack.EMPTY)
-        did.push('取 ' + output.count + 'x' + output.id)
-    }
-    // 补燃料（一整叠）
-    let fuel = be.getItem(1)
-    if (fuel.isEmpty()) {
-        let fid = findInv(inv, fuels)
-        if (fid) {
-            let count = Math.min(inv[fid], 64)
-            removeInv(inv, fid, count)
-            be.setItem(1, Item.of(fid, count))
-            did.push('加燃料 ' + count + 'x' + fid)
-        }
-    }
-    // 放入可烧炼矿物（一整叠）
+// ---------- 行为：熔炉（多炉，按炉型选料，平均分配燃料） ----------
+function getFurnaces(pos) {
+    if (pos.furnaces && pos.furnaces.length) return pos.furnaces
+    if (pos.furnace) return [pos.furnace]
+    return []
+}
+function hasPosition(pos, key) {
+    if (key === 'furnaces') return getFurnaces(pos).length > 0
+    if (key === 'barrels') return !!(pos.barrels && pos.barrels.length)
+    return !!pos[key]
+}
+
+// 某个熔炉是否需要处理（取产物/加燃料/放料）
+function furnaceNeedsWork(level, inv, p) {
+    let be = getContainerAt(level, p)
+    if (!be) return false
+    if (be.getItem(2).count >= FURNACE_OUTPUT_THRESHOLD) return true
+    if (be.getItem(1).isEmpty() && findInv(inv, fuels)) return true
+    let type = furnaceTypeOf(level, p)
     let input = be.getItem(0)
-    if (input.isEmpty()) {
-        let mid = findInv(inv, smeltables)
-        if (mid) {
-            let count = Math.min(inv[mid], 64)
-            removeInv(inv, mid, count)
-            be.setItem(0, Item.of(mid, count))
-            did.push('放矿 ' + count + 'x' + mid)
+    if (input.isEmpty()) return !!findFurnaceInput(inv, type)
+    return input.count < 64 && !!inv[input.id]
+}
+// 返回第一个需要处理的熔炉位置（用于导航），无则 null
+function firstFurnaceNeedingWork(level, inv, pos) {
+    for (let p of getFurnaces(pos)) {
+        if (furnaceNeedsWork(level, inv, p)) return p
+    }
+    return null
+}
+// 熔炉是否在学徒可操作范围内
+function furnaceInRange(level, entity, p) {
+    let dx = entity.x - (p[0] + 0.5)
+    let dy = entity.y - p[1]
+    let dz = entity.z - (p[2] + 0.5)
+    return dx * dx + dy * dy + dz * dz <= WORK_DIST_SQ
+}
+
+// 平均分配燃料到需要燃料的熔炉
+function distributeFuel(level, inv, furnaces, did) {
+    let needFuel = []
+    for (let p of furnaces) {
+        let be = getContainerAt(level, p)
+        if (be && be.getItem(1).isEmpty()) needFuel.push(be)
+    }
+    if (needFuel.length === 0) return
+    let fuelCount = 0
+    for (let fid of fuels) fuelCount += (inv[fid] || 0)
+    if (fuelCount <= 0) return
+    // 平均份额（至少 1），单炉最多 64
+    let share = Math.min(Math.max(1, Math.floor(fuelCount / needFuel.length)), 64)
+    for (let be of needFuel) {
+        let remaining = share
+        for (let fid of fuels) {
+            if (remaining <= 0) break
+            let have = inv[fid] || 0
+            let take = Math.min(have, remaining)
+            if (take > 0) {
+                removeInv(inv, fid, take)
+                be.setItem(1, Item.of(fid, take))
+                remaining -= take
+            }
         }
-    } else if (inv[input.id]) {
-        // 熔炉里已有同类，继续补满
-        let add = Math.min(inv[input.id], 64 - input.count)
-        if (add > 0) {
-            removeInv(inv, input.id, add)
-            be.setItem(0, Item.of(input.id, input.count + add))
-            did.push('补矿 ' + add + 'x' + input.id)
+        if (remaining < share) did.push('加燃料 ' + (share - remaining))
+    }
+}
+
+function useFurnaces(level, inv, pos, entity) {
+    // 只处理学徒附近的熔炉，远处的炉子交给后续导航逐台前往
+    let furnaces = getFurnaces(pos).filter(p => furnaceInRange(level, entity, p))
+    if (furnaces.length === 0) return
+    let did = []
+    // 1. 取各炉输出（只要在操作该炉，就顺手取走，避免输出栏堵塞下一轮）
+    for (let p of furnaces) {
+        let be = getContainerAt(level, p)
+        if (!be) continue
+        let output = be.getItem(2)
+        if (!output.isEmpty()) {
+            addInv(inv, output.id, output.count)
+            be.setItem(2, $ItemStack.EMPTY)
+            did.push('取 ' + output.count + 'x' + output.id)
+        }
+    }
+    // 2. 平均分配燃料
+    distributeFuel(level, inv, furnaces, did)
+    // 3. 按炉型分配输入（粗金属->高炉，肉类->烟熏炉）
+    for (let p of furnaces) {
+        let be = getContainerAt(level, p)
+        if (!be) continue
+        let type = furnaceTypeOf(level, p)
+        let input = be.getItem(0)
+        if (input.isEmpty()) {
+            let mid = findFurnaceInput(inv, type)
+            if (mid) {
+                let count = Math.min(inv[mid], 64)
+                removeInv(inv, mid, count)
+                be.setItem(0, Item.of(mid, count))
+                did.push('放 ' + count + 'x' + mid + ' 到 ' + type)
+            }
+        } else if (inv[input.id]) {
+            let add = Math.min(inv[input.id], 64 - input.count)
+            if (add > 0) {
+                removeInv(inv, input.id, add)
+                be.setItem(0, Item.of(input.id, input.count + add))
+                did.push('补 ' + add + 'x' + input.id)
+            }
         }
     }
     if (did.length) debugItem(entity, '熔炉 ' + did.join(', '))
@@ -464,6 +814,14 @@ function useWorkstation(inv, entity) {
         removeInv(inv, 'goety:snap_fungus', fungus)
         addInv(inv, 'goety:snap_warts', fungus * 4)
         did.push(fungus + 'x goety:snap_fungus -> ' + (fungus * 4) + 'x goety:snap_warts')
+    }
+    // 粗钻石碎片 -> 粗钻石（9 碎片批量）
+    let shards = inv['spelunkery:rough_diamond_shard'] || 0
+    let roughCount = Math.floor(shards / 9)
+    if (roughCount > 0) {
+        removeInv(inv, 'spelunkery:rough_diamond_shard', roughCount * 9)
+        addInv(inv, 'spelunkery:rough_diamond', roughCount)
+        did.push(roughCount + 'x spelunkery:rough_diamond')
     }
     if (did.length) debugItem(entity, '合成 ' + did.join(', '))
 }
@@ -499,12 +857,11 @@ function enchant(level, inv, entity, pos) {
         removeInv(inv, id, 1)
         removeInv(inv, 'minecraft:lapis_lazuli', 3)
         let enchanted = $EnchantmentHelper.enchantItem(level.random, stack, 30, false)
-        // 附魔完的物品放进注册箱子（保留附魔 NBT）
-        let chest = getStorageChest(level, pos)
-        if (chest) {
-            let slot = findEmptySlot(chest)
+        // 附魔完的物品放进存储容器（保留附魔 NBT）
+        for (let be of getStorageContainers(level, pos)) {
+            let slot = findEmptySlot(be)
             if (slot !== -1) {
-                chest.setItem(slot, enchanted)
+                be.setItem(slot, enchanted)
                 debugItem(entity, '附魔 ' + enchanted.id + ' 已存入箱子')
                 return
             }
@@ -520,6 +877,107 @@ function isEnchantable(id) {
         id.indexOf('shovel') !== -1 || id.indexOf('hoe') !== -1 || id.indexOf('helmet') !== -1 ||
         id.indexOf('chestplate') !== -1 || id.indexOf('leggings') !== -1 || id.indexOf('boots') !== -1 ||
         id.indexOf('book') !== -1 || id.indexOf('bow') !== -1
+}
+
+// ---------- 镐（学徒工具） ----------
+// 镐的基础等级（越高越好）
+const pickaxeTiers = {
+    'minecraft:iron_pickaxe': 2,
+    'minecraft:diamond_pickaxe': 3,
+    'kubejs:pale_metal_pickaxe': 4
+}
+// 制作优先级（从优到劣）；recipe 对应 recipes 列表里的配方 id
+const pickaxeCraftOrder = [
+    { id: 'kubejs:pale_metal_pickaxe', recipe: 'pale_steel_pickaxe' },
+    { id: 'minecraft:diamond_pickaxe', recipe: 'diamond_pickaxe' },
+    { id: 'minecraft:iron_pickaxe', recipe: 'iron_pickaxe' }
+]
+// 读取物品附魔（附魔 id -> 等级）
+function readEnchants(stack) {
+    let map = {}
+    try {
+        if (stack.nbt && stack.nbt.Enchantments) {
+            for (let e of stack.nbt.Enchantments) {
+                map[String(e.id)] = parseInt(e.lvl || '1')
+            }
+        }
+    } catch (err) {}
+    return map
+}
+// 镐评分：等级 + 附魔加权（时运最值钱，精准采集对采紫水晶是负收益）
+function pickaxeScore(id, enchants) {
+    let score = pickaxeTiers[id] || 0
+    for (let e in enchants) {
+        let lvl = enchants[e] || 1
+        if (e === 'minecraft:fortune') score += lvl * 1.5
+        else if (e === 'minecraft:efficiency') score += lvl * 0.4
+        else if (e === 'minecraft:unbreaking') score += lvl * 0.2
+        else if (e === 'minecraft:silk_touch') score -= 10
+    }
+    return score
+}
+// 镐的固定附魔（pale 镐由配方自带）；普通镐无附魔
+const pickaxeBaseEnchants = {
+    'kubejs:pale_metal_pickaxe': { 'minecraft:fortune': 4, 'minecraft:efficiency': 3, 'minecraft:unbreaking': 4 }
+}
+// 仅按 id 估算评分（用于规划，忽略随机附魔）
+function pickaxeIdScore(id) {
+    return pickaxeScore(id, pickaxeBaseEnchants[id] || {})
+}
+// 由 id 构造镐物品（带已知附魔）
+function pickaxeStackFor(id) {
+    let stack = Item.of(id)
+    let ench = pickaxeBaseEnchants[id] || {}
+    for (let e in ench) stack = stack.enchant(e, ench[e])
+    return stack
+}
+// 评分最高的镐（背包 + 存储容器），返回 ItemStack 或 null
+function bestPickaxeStack(level, pos, inv) {
+    let best = null, bestScore = -1e9
+    for (let id of Object.keys(pickaxeTiers)) {
+        if ((inv[id] || 0) > 0) {
+            let s = pickaxeIdScore(id)
+            if (s > bestScore) { bestScore = s; best = pickaxeStackFor(id) }
+        }
+    }
+    for (let be of getStorageContainers(level, pos)) {
+        for (let i = 0; i < be.getContainerSize(); i++) {
+            let st = be.getItem(i)
+            if (st.isEmpty()) continue
+            if (pickaxeTiers[st.id] !== undefined) {
+                let s = pickaxeScore(st.id, readEnchants(st))
+                if (s > bestScore) { bestScore = s; best = st }
+            }
+        }
+    }
+    return best
+}
+// 为制作合适的镐生成计划（材料来自背包 + 存储容器；木棍按需合成）
+function planPickaxe(level, pos, inv, chestInv) {
+    let currentBest = bestPickaxeStack(level, pos, inv)
+    let currentScore = currentBest ? pickaxeScore(currentBest.id, readEnchants(currentBest)) : -1
+    for (let p of pickaxeCraftOrder) {
+        if (pickaxeIdScore(p.id) <= currentScore) continue
+        let r = recipeById(p.recipe)
+        if (!r) continue
+        // 硬材料需直接可用；木棍允许按需合成
+        let enough = true
+        for (let k in r.in) {
+            if (k === 'minecraft:stick') continue
+            if (availableCount(inv, chestInv, k) < r.in[k]) { enough = false; break }
+        }
+        if (!enough) continue
+        let plan = []
+        for (let k in r.in) {
+            let sub = planGetItem(inv, chestInv, k, r.in[k], 0, [])
+            if (!sub) { enough = false; break }
+            plan = plan.concat(sub)
+        }
+        if (!enough) continue
+        plan.push({ a: 'craft_pickaxe', recipe: p.recipe, id: p.id })
+        return plan
+    }
+    return null
 }
 
 // ---------- 农田：8 格内收割作物 / 采集紫水晶 ----------
@@ -556,14 +1014,9 @@ function findFarmTarget(level, entity, inv) {
 }
 
 function storeHarvest(level, pos, inv, id, count) {
-    let chest = getStorageChest(level, pos)
-    if (chest) {
-        let left = depositStackToContainer(chest, id, count)
-        if (left <= 0) return
-        addInv(inv, id, left)
-        return
-    }
-    addInv(inv, id, count)
+    let left = depositToStorage(level, pos, id, count)
+    if (left <= 0) return
+    addInv(inv, id, left)
 }
 
 function harvestCrop(level, inv, target, entity, pos) {
@@ -596,9 +1049,11 @@ function harvestCrop(level, inv, target, entity, pos) {
 }
 
 function harvestAmethyst(level, inv, target, entity, pos) {
-    let bc = target.bc
-    let drops = bc.getDrops() || []
-    bc.set('minecraft:air')
+    // 有镐时用镐挖掘，得到正确掉落（镐 -> 4 碎片，时运加成）；无镐则空手 2 碎片
+    let pickaxe = bestPickaxeStack(level, pos, inv)
+    let drops = pickaxe ? (target.bc.getDrops(entity, pickaxe) || []) : (target.bc.getDrops() || [])
+    // 用 getDrops 已拿到掉落，destroyBlock 不再掉落（drop=false），避免重复
+    level.destroyBlock(new BlockPos(target.x, target.y, target.z), false, null, 512)
     for (let stack of drops) {
         if (stack.count > 0) storeHarvest(level, pos, inv, stack.id, stack.count)
     }
@@ -613,7 +1068,7 @@ function handleFarming(entity, inv, pos) {
     let dy = entity.y - target.y
     let dz = entity.z - (target.z + 0.5)
     if (dx * dx + dy * dy + dz * dz > WORK_DIST_SQ) {
-        entity.navigation.moveTo(target.x + 0.5, target.y, target.z + 0.5, 1.0)
+        entity.navigation.moveTo(target.x + 0.5, target.y, target.z + 0.5, 0.6)
         setTask(entity, '前往 ' + (target.type === 'crop' ? '收割作物' : '采集紫水晶'))
         return true
     }
@@ -679,7 +1134,7 @@ function handlePlanterFarming(entity, inv, pos) {
     let dy = entity.y - target.y
     let dz = entity.z - (target.z + 0.5)
     if (dx * dx + dy * dy + dz * dz > WORK_DIST_SQ) {
-        entity.navigation.moveTo(target.x + 0.5, target.y, target.z + 0.5, 1.0)
+        entity.navigation.moveTo(target.x + 0.5, target.y, target.z + 0.5, 0.6)
         setTask(entity, '前往种植盆')
         return true
     }
@@ -735,9 +1190,8 @@ function applyPlan(inv, chestInv, plan) {
 
 // 读取箱子内容（所有物品，未附魔）
 function getChestInvMap(level, pos) {
-    let chest = getStorageChest(level, pos)
     let map = {}
-    if (chest) {
+    for (let chest of getStorageContainers(level, pos)) {
         for (let i = 0; i < chest.getContainerSize(); i++) {
             let s = chest.getItem(i)
             if (!s.isEmpty() && !s.isEnchanted()) map[s.id] = (map[s.id] || 0) + s.count
@@ -875,6 +1329,7 @@ function describeStep(step) {
         let n = r ? r.name : step.recipe
         return (step.count && step.count > 1) ? n + ' x' + step.count : n
     }
+    if (step.a === 'craft_pickaxe') return '制作镐 ' + step.id
     if (step.a === 'polish') return '打磨 ' + step.rough
     if (step.a === 'enchant') return '附魔'
     if (step.a === 'deposit') return '存 ' + step.item
@@ -884,18 +1339,19 @@ function describeStep(step) {
 function executeStep(entity, inv, pos, step) {
     let level = entity.level
     if (step.a === 'take') {
-        let chest = getStorageChest(level, pos)
-        if (!chest) return
         let need = step.count
-        for (let i = 0; i < chest.getContainerSize() && need > 0; i++) {
-            let s = chest.getItem(i)
-            if (!s.isEmpty() && !s.isEnchanted() && s.id === step.item) {
-                let take = Math.min(s.count, need)
-                addInv(inv, step.item, take)
-                if (s.count === take) chest.setItem(i, $ItemStack.EMPTY)
-                else chest.setItem(i, Item.of(step.item, s.count - take))
-                need -= take
+        for (let chest of getStorageContainers(level, pos)) {
+            for (let i = 0; i < chest.getContainerSize() && need > 0; i++) {
+                let s = chest.getItem(i)
+                if (!s.isEmpty() && !s.isEnchanted() && s.id === step.item) {
+                    let take = Math.min(s.count, need)
+                    addInv(inv, step.item, take)
+                    if (s.count === take) chest.setItem(i, $ItemStack.EMPTY)
+                    else chest.setItem(i, Item.of(step.item, s.count - take))
+                    need -= take
+                }
             }
+            if (need <= 0) break
         }
         if (need < step.count) debugItem(entity, '取 ' + (step.count - need) + 'x ' + step.item)
     } else if (step.a === 'craft') {
@@ -910,20 +1366,21 @@ function executeStep(entity, inv, pos, step) {
             // 手上持有正在处理的物品/工具
             setHeldItem(entity, r.tool || Object.keys(r.in)[0] || Object.keys(r.out)[0])
             if (r.make) {
-                // NBT 产物：直接存入箱子
-                let chest = getStorageChest(level, pos)
+                // NBT 产物：直接存入存储容器
                 let outKey = Object.keys(r.out)[0]
                 for (let i = 0; i < times; i++) {
                     let stack = r.make()
-                    if (chest) {
-                        let slot = findEmptySlot(chest)
+                    let placed = false
+                    for (let be of getStorageContainers(level, pos)) {
+                        let slot = findEmptySlot(be)
                         if (slot !== -1) {
-                            chest.setItem(slot, stack)
-                            continue
+                            be.setItem(slot, stack)
+                            placed = true
+                            break
                         }
                     }
                     // 箱子满/无箱子：暂存背包（丢 NBT）
-                    addInv(inv, outKey, 1)
+                    if (!placed) addInv(inv, outKey, 1)
                 }
                 debugItem(entity, r.name + (times > 1 ? ' x' + times : ''))
             } else {
@@ -931,22 +1388,31 @@ function executeStep(entity, inv, pos, step) {
                 debugItem(entity, r.name + (times > 1 ? ' x' + times : ''))
             }
         }
+    } else if (step.a === 'craft_pickaxe') {
+        let r = recipeById(step.recipe)
+        if (!r) return
+        let enough = true
+        for (let k in r.in) if ((inv[k] || 0) < r.in[k]) { enough = false; break }
+        if (r.tool && (inv[r.tool] || 0) < 1) enough = false
+        if (enough) {
+            for (let k in r.in) removeInv(inv, k, r.in[k])
+            addInv(inv, step.id, 1)
+            setHeldItem(entity, step.id)
+            debugItem(entity, '制作镐 ' + step.id)
+        }
     } else if (step.a === 'polish') {
         polishGems(inv, entity)
         debugItem(entity, '打磨 ' + step.rough)
     } else if (step.a === 'enchant') {
         enchant(level, inv, entity, pos)
     } else if (step.a === 'deposit') {
-        let chest = getStorageChest(level, pos)
-        if (chest) {
-            let have = inv[step.item] || 0
-            if (have > 0) {
-                let left = depositStackToContainer(chest, step.item, have)
-                let put = have - left
-                if (put > 0) {
-                    removeInv(inv, step.item, put)
-                    debugItem(entity, '存 ' + put + 'x ' + step.item)
-                }
+        let have = inv[step.item] || 0
+        if (have > 0) {
+            let left = depositToStorage(level, pos, step.item, have)
+            let put = have - left
+            if (put > 0) {
+                removeInv(inv, step.item, put)
+                debugItem(entity, '存 ' + put + 'x ' + step.item)
             }
         }
     }
@@ -1023,7 +1489,7 @@ function stepPlan(entity, inv, pos) {
     let targetPos = null
     let navTask = ''
     if (step.a === 'take' || step.a === 'deposit') {
-        targetPos = pos.chest || pos.raiderChest
+        targetPos = firstStoragePos(pos)
         navTask = '前往箱子'
     } else if (step.a === 'craft') {
         let r = recipeById(step.recipe)
@@ -1044,6 +1510,9 @@ function stepPlan(entity, inv, pos) {
             targetPos = water
             navTask = '前往水源'
         }
+    } else if (step.a === 'craft_pickaxe') {
+        targetPos = pos.workstation
+        navTask = '前往工作台'
     } else if (step.a === 'enchant') {
         targetPos = pos.enchantingTable
         navTask = '前往附魔台'
@@ -1053,7 +1522,7 @@ function stepPlan(entity, inv, pos) {
         let dy = entity.y - targetPos[1]
         let dz = entity.z - (targetPos[2] + 0.5)
         if (dx * dx + dy * dy + dz * dz > WORK_DIST_SQ) {
-            entity.navigation.moveTo(targetPos[0] + 0.5, targetPos[1], targetPos[2] + 0.5, 1.0)
+            entity.navigation.moveTo(targetPos[0] + 0.5, targetPos[1], targetPos[2] + 0.5, 0.6)
             setTask(entity, navTask + '（计划）')
             return true
         }
@@ -1115,7 +1584,13 @@ function thinkAndPlan(entity, inv, pos) {
         }
     }
     if (pos.workstation) {
-        let plan = planNetherite(inv, chestInv)
+        let plan = planPickaxe(level, pos, inv, chestInv)
+        if (plan && plan.length) {
+            setPlan(entity, plan)
+            setTask(entity, '思考 ' + plan.map(describeStep).join(' → '))
+            return true
+        }
+        plan = planNetherite(inv, chestInv)
         if (plan && plan.length) {
             setPlan(entity, plan)
             setTask(entity, '思考 ' + plan.map(describeStep).join(' → '))
@@ -1126,12 +1601,19 @@ function thinkAndPlan(entity, inv, pos) {
 }
 
 // ---------- 寻路 ----------
-const positionPriority = ['hopper', 'chest', 'raiderChest', 'furnace', 'workstation', 'cursedInfuser']
+const positionPriority = ['hopper', 'chest', 'raiderChest', 'barrels', 'furnaces', 'workstation', 'cursedInfuser', 'composter']
 const WORK_DIST_SQ = 6.25 // 约 2.5 格内视为到达
 const FURNACE_OUTPUT_THRESHOLD = 16 // 熔炉产物攒够 16 个才取一次
 
 function needsWork(level, inv, pos, key) {
     let p = pos[key]
+    // 熔炉：列表形式（可能为空数组）
+    if (key === 'furnaces') {
+        for (let fp of getFurnaces(pos)) {
+            if (furnaceNeedsWork(level, inv, fp)) return true
+        }
+        return false
+    }
     if (!p) return false
     // 基座过滤时，禁用专注队列的诅咒注入器/工作台（改由规划系统处理）
     let pedestalItem = getPedestalItem(level, pos)
@@ -1142,9 +1624,50 @@ function needsWork(level, inv, pos, key) {
     if (key === 'workstation') {
         for (let ingot in mineralBlocks) if ((inv[ingot] || 0) >= 9) return true
         if ((inv['goety:snap_fungus'] || 0) >= 1) return true
+        if ((inv['spelunkery:rough_diamond_shard'] || 0) >= 9) return true
         return (inv['minecraft:paper'] || 0) >= 1 && (inv['minecraft:sand'] || 0) >= 1
     }
     if (key === 'enchantingTable') return false // 附魔改由规划系统处理
+    // 堆肥桶：满（level 8）时取出骨粉，或箱子 + 身上合计超过一组种子时需要处理
+    if (key === 'composter') {
+        let cb = level.getBlock(p[0], p[1], p[2])
+        if (cb && cb.id === 'minecraft:composter') {
+            let cprops = cb.getProperties()
+            if (parseInt(cprops.get('level') || '0') >= 8) return true
+        }
+        let chestInv = getChestInvMap(level, pos)
+        for (let seedId of seedItems) {
+            if ((inv[seedId] || 0) + (chestInv[seedId] || 0) > 64) return true
+        }
+        return false
+    }
+    // 箱子/袭击者箱子/木桶：跨所有存储容器判断
+    if (key === 'chest' || key === 'raiderChest' || key === 'barrels') {
+        let containers = getStorageContainers(level, pos)
+        if (!containers.length) return false
+        // 有空位 + 有非工作物品需要存
+        for (let be of containers) {
+            let hasEmptySlot = false
+            for (let i = 0; i < be.getContainerSize(); i++) {
+                if (be.getItem(i).isEmpty()) { hasEmptySlot = true; break }
+            }
+            if (hasEmptySlot) {
+                for (let id in inv) if (!isWorkItem(id)) return true
+                break
+            }
+        }
+        // 有未附魔的工作物品可取（保留数量只取到上限）
+        for (let be of containers) {
+            for (let i = 0; i < be.getContainerSize(); i++) {
+                let s = be.getItem(i)
+                if (!s.isEmpty() && isWorkItem(s.id) && !s.isEnchanted()) {
+                    if (itemReserve[s.id] !== undefined && (inv[s.id] || 0) >= itemReserve[s.id]) continue
+                    return true
+                }
+            }
+        }
+        return false
+    }
     let be = getContainerAt(level, p)
     if (!be) return false
     switch (key) {
@@ -1154,32 +1677,6 @@ function needsWork(level, inv, pos, key) {
                 if (!s.isEmpty() && !s.isEnchanted()) return true
             }
             return false
-        case 'raiderChest':
-        case 'chest':
-            // 箱子有空位才需要存非工作物品，避免箱子满后死循环
-            let hasEmptySlot = false
-            for (let i = 0; i < be.getContainerSize(); i++) {
-                if (be.getItem(i).isEmpty()) { hasEmptySlot = true; break }
-            }
-            if (hasEmptySlot) {
-                for (let id in inv) if (!isWorkItem(id)) return true
-            }
-            // 只取未附魔的工作物品（与 useRaiderChest 取物过滤保持一致，避免死循环）
-            for (let i = 0; i < be.getContainerSize(); i++) {
-                let s = be.getItem(i)
-                if (!s.isEmpty() && isWorkItem(s.id) && !s.isEnchanted()) {
-                    if (itemReserve[s.id] !== undefined && (inv[s.id] || 0) >= itemReserve[s.id]) continue
-                    return true
-                }
-            }
-            return false
-        case 'furnace':
-            // 产物攒够一批才取，避免每烧完一个锭就跑一趟
-            if (be.getItem(2).count >= FURNACE_OUTPUT_THRESHOLD) return true
-            if (be.getItem(1).isEmpty() && findInv(inv, fuels)) return true
-            let furnaceInput = be.getItem(0)
-            if (furnaceInput.isEmpty()) return findInv(inv, smeltables) !== null
-            return furnaceInput.count < 64 && !!inv[furnaceInput.id]
         case 'cursedInfuser':
             // 输入为空且有可注入材料，或附近有掉落产物
             if (be.getItem(0).isEmpty() && findInv(inv, cursedInfuserInputs)) return true
@@ -1193,11 +1690,13 @@ function doWork(entity, inv, pos, key) {
     switch (key) {
         case 'hopper': useHopper(level, inv, pos[key], entity); break
         case 'raiderChest':
-        case 'chest': useRaiderChest(level, inv, pos[key], entity); break
-        case 'furnace': useFurnace(level, inv, pos[key], entity); break
+        case 'chest':
+        case 'barrels': useRaiderChest(level, inv, pos, entity); break
+        case 'furnaces': useFurnaces(level, inv, pos, entity); break
         case 'workstation': useWorkstation(inv, entity); break
         case 'enchantingTable': enchant(level, inv, entity, pos); break
         case 'cursedInfuser': useCursedInfuser(level, inv, pos[key], entity); break
+        case 'composter': useComposter(level, inv, pos, entity); break
     }
 }
 
@@ -1206,11 +1705,13 @@ const taskNames = {
     'hopper': '从漏斗取物',
     'chest': '箱子存取',
     'raiderChest': '袭击者箱子存取',
-    'furnace': '熔炉烧炼',
+    'barrels': '木桶存取',
+    'furnaces': '熔炉烧炼',
     'workstation': '工作台合成',
     'enchantingTable': '附魔',
     'polish': '打磨宝石',
     'cursedInfuser': '使用诅咒注入器',
+    'composter': '使用堆肥桶',
     'idle': '空闲',
     'follow': '跟随主人'
 }
@@ -1267,6 +1768,8 @@ global.apprenticeAI = (entity) => {
     polishGems(inv, entity)
     // 背景工序：把超出保留数量的工作物品存回箱子
     depositSurplus(entity, inv, pos)
+    // 背景工序：拾取附近掉落在地上的物品（作物、骨粉等）
+    collectGroundItems(entity, inv)
 
     // 农田：搜索 8 格内成熟作物/紫水晶簇并处理（优先于专注队列）
     if (handleFarming(entity, inv, pos)) {
@@ -1294,10 +1797,10 @@ global.apprenticeAI = (entity) => {
 
     // 更新专注队列（记忆，长度 5）：剔除已完成/被堵住的任务，再按优先级补充
     let mem = getMemory(entity)
-    mem = mem.filter(key => pos[key] && needsWork(level, inv, pos, key))
+    mem = mem.filter(key => hasPosition(pos, key) && needsWork(level, inv, pos, key))
     for (let key of positionPriority) {
         if (mem.length >= 5) break
-        if (pos[key] && needsWork(level, inv, pos, key) && mem.indexOf(key) === -1) {
+        if (hasPosition(pos, key) && needsWork(level, inv, pos, key) && mem.indexOf(key) === -1) {
             mem.push(key)
         }
     }
@@ -1306,12 +1809,22 @@ global.apprenticeAI = (entity) => {
     // 专注队首任务（一次只做一项）
     let focus = mem[0]
     if (focus) {
-        let p = pos[focus]
+        let p
+        if (focus === 'furnaces') p = firstFurnaceNeedingWork(level, inv, pos)
+        else if (focus === 'barrels') p = firstStoragePos(pos)
+        else p = pos[focus]
+        if (!p) {
+            mem.shift()
+            setMemory(entity, mem)
+            setTask(entity, taskNames.idle)
+            writeInv(entity, inv)
+            return
+        }
         let dx = entity.x - (p[0] + 0.5)
         let dy = entity.y - p[1]
         let dz = entity.z - (p[2] + 0.5)
         if (dx * dx + dy * dy + dz * dz > WORK_DIST_SQ) {
-            entity.navigation.moveTo(p[0] + 0.5, p[1], p[2] + 0.5, 1.0)
+            entity.navigation.moveTo(p[0] + 0.5, p[1], p[2] + 0.5, 0.6)
             setTask(entity, '前往 ' + taskNames[focus])
             writeInv(entity, inv)
             return
@@ -1338,6 +1851,28 @@ global.apprenticeAI = (entity) => {
     setTask(entity, taskNames.idle + (assigned.length ? ' [已设:' + assigned.join(',') + ']\n' : ' [未设置任何位置]\n') + chestInfo + ' \n 背包: ' + formatInv(inv))
 
     writeInv(entity, inv)
+}
+
+// 拾取学徒附近掉落在地上的物品（作物、骨粉等），返回拾取数量
+function collectGroundItems(entity, inv) {
+    let level = entity.level
+    let aabb = new $AABB(entity.x - 3, entity.y - 1, entity.z - 3, entity.x + 3, entity.y + 3, entity.z + 3)
+    let list = level.getEntitiesWithin(aabb)
+    let did = []
+    let count = 0
+    for (let e of list) {
+        if (e.type === 'minecraft:item') {
+            let stack = e.item
+            if (stack && stack.count > 0) {
+                addInv(inv, stack.id, stack.count)
+                did.push(stack.count + 'x ' + stack.id)
+                count += stack.count
+            }
+            e.discard()
+        }
+    }
+    if (did.length) debugItem(entity, '捡起 ' + did.join(', '))
+    return count
 }
 
 // 拾取诅咒注入器附近掉落的产物，返回拾取数量
