@@ -46,12 +46,27 @@ const recipes = (function () {
         list.push({ id: 'compress_' + ingot, in: o(ingot, 9), out: o(block, 1), at: 'workstation', name: '合成 ' + block })
         list.push({ id: 'decompose_' + block, in: o(block, 1), out: o(ingot, 9), at: 'workstation', name: '分解 ' + block })
     }
+    // 粒 ↔ 锭（用于多级需求模拟）
+    list.push({ id: 'gold_ingot_to_nuggets', in: { 'minecraft:gold_ingot': 1 }, out: { 'minecraft:gold_nugget': 9 }, at: 'workstation', name: '分解金粒' })
+    list.push({ id: 'gold_nuggets_to_ingot', in: { 'minecraft:gold_nugget': 9 }, out: { 'minecraft:gold_ingot': 1 }, at: 'workstation', name: '合成金锭' })
+    list.push({ id: 'iron_ingot_to_nuggets', in: { 'minecraft:iron_ingot': 1 }, out: { 'minecraft:iron_nugget': 9 }, at: 'workstation', name: '分解铁粒' })
+    list.push({ id: 'iron_nuggets_to_ingot', in: { 'minecraft:iron_nugget': 9 }, out: { 'minecraft:iron_ingot': 1 }, at: 'workstation', name: '合成铁锭' })
     list.push({ id: 'sandpaper', in: { 'minecraft:paper': 1, 'minecraft:sand': 1 }, out: { 'create:sand_paper': 1 }, at: 'workstation', name: '合成砂纸' })
     list.push({ id: 'rough_diamond_from_shards', in: { 'spelunkery:rough_diamond_shard': 9}, out: { 'spelunkery:rough_diamond': 1 }, at: 'workstation', name: '合成粗钻石' })
     list.push({ id: 'snap_seed', in: { 'goety:snap_fungus': 1 }, out: { 'goety:snap_warts': 4 }, at: 'workstation', name: '合成砰砰菌种子' })
     list.push({ id: 'netherite', in: { 'minecraft:netherite_scrap': 4, 'minecraft:gold_ingot': 4 }, out: { 'minecraft:netherite_ingot': 1 }, at: 'workstation', name: '合成下界合金' })
     // 工具合成
     list.push({ id: 'sticks', in: { 'minecraft:oak_planks': 2 }, out: { 'minecraft:stick': 4 }, at: 'workstation', name: '合成木棍' })
+    // 炼药材料（园丁）
+    list.push({ id: 'glistering_melon', in: { 'minecraft:melon_slice': 1, 'minecraft:gold_nugget': 8 }, out: { 'minecraft:glistering_melon_slice': 1 }, at: 'workstation', name: '合成闪耀西瓜片' })
+    list.push({ id: 'golden_carrot', in: { 'minecraft:carrot': 1, 'minecraft:gold_nugget': 8 }, out: { 'minecraft:golden_carrot': 1 }, at: 'workstation', name: '合成金胡萝卜' })
+    list.push({ id: 'golden_apple', in: { 'minecraft:apple': 1, 'minecraft:gold_ingot': 8 }, out: { 'minecraft:golden_apple': 1 }, at: 'workstation', name: '合成金苹果' })
+    list.push({ id: 'magma_cream', in: { 'minecraft:blaze_powder': 1, 'minecraft:slime_ball': 1 }, out: { 'minecraft:magma_cream': 1 }, at: 'workstation', name: '合成岩浆膏' })
+    list.push({ id: 'fermented_spider_eye', in: { 'minecraft:spider_eye': 1, 'minecraft:brown_mushroom': 1, 'minecraft:sugar': 1 }, out: { 'minecraft:fermented_spider_eye': 1 }, at: 'workstation', name: '合成发酵蛛眼' })
+    list.push({ id: 'blaze_powder', in: { 'minecraft:blaze_rod': 1 }, out: { 'minecraft:blaze_powder': 2 }, at: 'workstation', name: '合成烈焰粉' })
+    list.push({ id: 'paper_from_sugarcane', in: { 'minecraft:sugar_cane': 1 }, out: { 'minecraft:paper': 1 }, at: 'workstation', name: '处理甘蔗为纸' })
+    list.push({ id: 'sugar_from_sugarcane', in: { 'minecraft:sugar_cane': 1 }, out: { 'minecraft:sugar': 1 }, at: 'workstation', name: '处理甘蔗为糖' })
+    list.push({ id: 'sugar_cane_block', in: { 'minecraft:sugar_cane': 9 }, out: { 'quark:sugar_cane_block': 1 }, at: 'workstation', name: '打包甘蔗块' })
     list.push({ id: 'iron_pickaxe', in: { 'minecraft:iron_ingot': 3, 'minecraft:stick': 2 }, out: { 'minecraft:iron_pickaxe': 1 }, at: 'workstation', name: '合成铁镐' })
     list.push({ id: 'pale_steel_pickaxe', in: { 'goety:pale_steel_ingot': 3, 'minecraft:stick': 2 }, out: { 'kubejs:pale_metal_pickaxe': 1 }, at: 'workstation', name: '合成苍白钢镐',
         make: () => Item.of('kubejs:pale_metal_pickaxe', '{Damage:0}').enchant('minecraft:unbreaking', 4).enchant('minecraft:efficiency', 3).enchant('minecraft:fortune', 4) })
@@ -789,9 +804,11 @@ function useFurnaces(level, inv, pos, entity) {
 // ---------- 行为：工作台合成 ----------
 function useWorkstation(inv, entity) {
     let did = []
-    // 9 锭 -> 块（批量，只压缩，避免与反向合成互相振荡）
+    // 9 锭 -> 块（仅当锭数 >= 半组 32 才压缩，避免把少量锭合成块）
     for (let ingot in mineralBlocks) {
-        let count = Math.floor((inv[ingot] || 0) / 9)
+        let have = inv[ingot] || 0
+        if (have < 32) continue
+        let count = Math.floor(have / 9)
         if (count > 0) {
             removeInv(inv, ingot, count * 9)
             addInv(inv, mineralBlocks[ingot], count)
@@ -852,8 +869,8 @@ function enchant(level, inv, entity, pos) {
     for (let id in inv) {
         let stack = Item.of(id)
         if (stack.isEmpty()) continue
-        // 只对可附魔物品（工具/装备/书）
-        if (!isEnchantable(id)) continue
+        // 只对可附魔物品（工具/装备/书），且不是镐
+        if (!isEnchantTarget(id)) continue
         removeInv(inv, id, 1)
         removeInv(inv, 'minecraft:lapis_lazuli', 3)
         let enchanted = $EnchantmentHelper.enchantItem(level.random, stack, 30, false)
@@ -885,6 +902,10 @@ const pickaxeTiers = {
     'minecraft:iron_pickaxe': 2,
     'minecraft:diamond_pickaxe': 3,
     'kubejs:pale_metal_pickaxe': 4
+}
+// 附魔目标：可附魔且不是镐（镐由学徒按固定附魔管理，避免洗掉时运等）
+function isEnchantTarget(id) {
+    return isEnchantable(id) && pickaxeTiers[id] === undefined
 }
 // 制作优先级（从优到劣）；recipe 对应 recipes 列表里的配方 id
 const pickaxeCraftOrder = [
@@ -953,7 +974,7 @@ function bestPickaxeStack(level, pos, inv) {
     return best
 }
 // 为制作合适的镐生成计划（材料来自背包 + 存储容器；木棍按需合成）
-function planPickaxe(level, pos, inv, chestInv) {
+function planPickaxe(entity, level, pos, inv, chestInv) {
     let currentBest = bestPickaxeStack(level, pos, inv)
     let currentScore = currentBest ? pickaxeScore(currentBest.id, readEnchants(currentBest)) : -1
     for (let p of pickaxeCraftOrder) {
@@ -966,7 +987,12 @@ function planPickaxe(level, pos, inv, chestInv) {
             if (k === 'minecraft:stick') continue
             if (availableCount(inv, chestInv, k) < r.in[k]) { enough = false; break }
         }
-        if (!enough) continue
+        if (!enough) {
+            // 只对当前最优可升级配方发起一次需求（含其全部缺失叶子材料）
+            let missing = findMissingMaterials(inv, chestInv, p.id, 1, 0, [], [], true)
+            if (missing.length) requestMaterials(entity, p.id, missing)
+            return null
+        }
         let plan = []
         for (let k in r.in) {
             let sub = planGetItem(inv, chestInv, k, r.in[k], 0, [])
@@ -991,26 +1017,52 @@ function getCropAge(bc) {
 
 function findFarmTarget(level, entity, inv) {
     let bx = Math.floor(entity.x), by = Math.floor(entity.y), bz = Math.floor(entity.z)
-    let amethystTarget = null
     for (let dy = -FARM_RANGE; dy <= FARM_RANGE; dy++)
         for (let dz = -FARM_RANGE; dz <= FARM_RANGE; dz++)
             for (let dx = -FARM_RANGE; dx <= FARM_RANGE; dx++) {
                 let x = bx + dx, y = by + dy, z = bz + dz
                 let bc = level.getBlock(x, y, z)
                 if (!bc) continue
-                let id = bc.id
-                let crop = farmCrops[id]
-                if (crop) {
-                    // snap_warts 需要种子才能补种，无种子则跳过
-                    if (crop.seed !== crop.harvest && (inv[crop.seed] || 0) < 1) continue
-                    if (getCropAge(bc) >= crop.maxAge) {
-                        return { type: 'crop', id: id, x: x, y: y, z: z, bc: bc }
-                    }
-                } else if (id === 'minecraft:amethyst_cluster' && !amethystTarget) {
-                    amethystTarget = { type: 'amethyst', x: x, y: y, z: z, bc: bc }
+                let crop = farmCrops[bc.id]
+                if (!crop) continue
+                // snap_warts 需要种子才能补种，无种子则跳过
+                if (crop.seed !== crop.harvest && (inv[crop.seed] || 0) < 1) continue
+                if (getCropAge(bc) >= crop.maxAge) {
+                    return { type: 'crop', id: bc.id, x: x, y: y, z: z, bc: bc }
                 }
             }
-    return amethystTarget
+    return null
+}
+
+// 采集紫水晶（学徒保留的职能）
+function findAmethystTarget(level, entity) {
+    let bx = Math.floor(entity.x), by = Math.floor(entity.y), bz = Math.floor(entity.z)
+    for (let dy = -FARM_RANGE; dy <= FARM_RANGE; dy++)
+        for (let dz = -FARM_RANGE; dz <= FARM_RANGE; dz++)
+            for (let dx = -FARM_RANGE; dx <= FARM_RANGE; dx++) {
+                let x = bx + dx, y = by + dy, z = bz + dz
+                let bc = level.getBlock(x, y, z)
+                if (bc && bc.id === 'minecraft:amethyst_cluster') {
+                    return { type: 'amethyst', x: x, y: y, z: z, bc: bc }
+                }
+            }
+    return null
+}
+function handleAmethyst(entity, inv, pos) {
+    let level = entity.level
+    let target = findAmethystTarget(level, entity)
+    if (!target) return false
+    let dx = entity.x - (target.x + 0.5)
+    let dy = entity.y - target.y
+    let dz = entity.z - (target.z + 0.5)
+    if (dx * dx + dy * dy + dz * dz > WORK_DIST_SQ) {
+        entity.navigation.moveTo(target.x + 0.5, target.y, target.z + 0.5, 1.0)
+        setTask(entity, '前往采集紫水晶')
+        return true
+    }
+    harvestAmethyst(level, inv, target, entity, pos)
+    setTask(entity, '采集紫水晶')
+    return true
 }
 
 function storeHarvest(level, pos, inv, id, count) {
@@ -1068,13 +1120,12 @@ function handleFarming(entity, inv, pos) {
     let dy = entity.y - target.y
     let dz = entity.z - (target.z + 0.5)
     if (dx * dx + dy * dy + dz * dz > WORK_DIST_SQ) {
-        entity.navigation.moveTo(target.x + 0.5, target.y, target.z + 0.5, 0.6)
-        setTask(entity, '前往 ' + (target.type === 'crop' ? '收割作物' : '采集紫水晶'))
+        entity.navigation.moveTo(target.x + 0.5, target.y, target.z + 0.5, 1.0)
+        setTask(entity, '前往收割作物')
         return true
     }
-    if (target.type === 'crop') harvestCrop(level, inv, target, entity, pos)
-    else harvestAmethyst(level, inv, target, entity, pos)
-    setTask(entity, target.type === 'crop' ? '收割作物' : '采集紫水晶')
+    harvestCrop(level, inv, target, entity, pos)
+    setTask(entity, '收割作物')
     return true
 }
 
@@ -1134,12 +1185,123 @@ function handlePlanterFarming(entity, inv, pos) {
     let dy = entity.y - target.y
     let dz = entity.z - (target.z + 0.5)
     if (dx * dx + dy * dy + dz * dz > WORK_DIST_SQ) {
-        entity.navigation.moveTo(target.x + 0.5, target.y, target.z + 0.5, 0.6)
+        entity.navigation.moveTo(target.x + 0.5, target.y, target.z + 0.5, 1.0)
         setTask(entity, '前往种植盆')
         return true
     }
     harvestPlanterCrop(level, inv, target, entity, pos)
     setTask(entity, '收割种植盆')
+    return true
+}
+
+// ---------- 甘蔗：高度>2 只割上部，保留根部；20% 双倍收获 ----------
+function findSugarcaneTarget(level, entity) {
+    let bx = Math.floor(entity.x), by = Math.floor(entity.y), bz = Math.floor(entity.z)
+    for (let dy = -FARM_RANGE; dy <= FARM_RANGE; dy++)
+        for (let dz = -FARM_RANGE; dz <= FARM_RANGE; dz++)
+            for (let dx = -FARM_RANGE; dx <= FARM_RANGE; dx++) {
+                let x = bx + dx, y = by + dy, z = bz + dz
+                let bc = level.getBlock(x, y, z)
+                if (!bc || bc.id !== 'minecraft:sugar_cane') continue
+                // 只找基座（下方不是甘蔗）
+                let below = level.getBlock(x, y - 1, z)
+                if (below && below.id === 'minecraft:sugar_cane') continue
+                let height = 0
+                for (let h = 0; h < 4; h++) {
+                    let b = level.getBlock(x, y + h, z)
+                    if (b && b.id === 'minecraft:sugar_cane') height++
+                    else break
+                }
+                if (height >= 3) return { x: x, y: y, z: z, height: height }
+            }
+    return null
+}
+function harvestSugarcane(level, inv, target, entity, pos) {
+    let total = 0
+    for (let h = 1; h < target.height; h++) {
+        let bc = level.getBlock(target.x, target.y + h, target.z)
+        if (!bc || bc.id !== 'minecraft:sugar_cane') continue
+        let drops = bc.getDrops() || []
+        bc.set('minecraft:air')
+        for (let stack of drops) {
+            if (stack.id === 'minecraft:sugar_cane') total += stack.count
+        }
+    }
+    if (total > 0 && Math.random() < 0.2) {
+        total *= 2
+        debugItem(entity, '幸运双倍收获')
+    }
+    if (total > 0) storeHarvest(level, pos, inv, 'minecraft:sugar_cane', total)
+    debugItem(entity, '收割甘蔗 得 ' + total + 'x 甘蔗')
+}
+function handleSugarcane(entity, inv, pos) {
+    let level = entity.level
+    let target = findSugarcaneTarget(level, entity)
+    if (!target) return false
+    let dx = entity.x - (target.x + 0.5)
+    let dy = entity.y - (target.y + 1)
+    let dz = entity.z - (target.z + 0.5)
+    if (dx * dx + dy * dy + dz * dz > WORK_DIST_SQ) {
+        entity.navigation.moveTo(target.x + 0.5, target.y + 1, target.z + 0.5, 1.0)
+        setTask(entity, '前往收割甘蔗')
+        return true
+    }
+    harvestSugarcane(level, inv, target, entity, pos)
+    setTask(entity, '收割甘蔗')
+    return true
+}
+
+// ---------- 西瓜/南瓜：优先精准采集斧头 ----------
+function findSilkTouchAxe(level, pos) {
+    for (let be of getStorageContainers(level, pos)) {
+        for (let i = 0; i < be.getContainerSize(); i++) {
+            let s = be.getItem(i)
+            if (s.isEmpty()) continue
+            if (s.id.indexOf('axe') !== -1) {
+                let ench = readEnchants(s)
+                if (ench['minecraft:silk_touch']) return s
+            }
+        }
+    }
+    return null
+}
+function findGourdTarget(level, entity) {
+    let bx = Math.floor(entity.x), by = Math.floor(entity.y), bz = Math.floor(entity.z)
+    for (let dy = -FARM_RANGE; dy <= FARM_RANGE; dy++)
+        for (let dz = -FARM_RANGE; dz <= FARM_RANGE; dz++)
+            for (let dx = -FARM_RANGE; dx <= FARM_RANGE; dx++) {
+                let x = bx + dx, y = by + dy, z = bz + dz
+                let bc = level.getBlock(x, y, z)
+                if (!bc) continue
+                if (bc.id === 'minecraft:melon' || bc.id === 'minecraft:pumpkin') {
+                    return { x: x, y: y, z: z, bc: bc }
+                }
+            }
+    return null
+}
+function harvestGourd(level, inv, target, entity, pos) {
+    let axe = findSilkTouchAxe(level, pos)
+    let drops = axe ? (target.bc.getDrops(entity, axe) || []) : (target.bc.getDrops() || [])
+    level.destroyBlock(new BlockPos(target.x, target.y, target.z), false, null, 512)
+    for (let stack of drops) {
+        if (stack.count > 0) storeHarvest(level, pos, inv, stack.id, stack.count)
+    }
+    debugItem(entity, '采摘 ' + target.bc.id + (axe ? '（精准采集）' : ''))
+}
+function handleGourd(entity, inv, pos) {
+    let level = entity.level
+    let target = findGourdTarget(level, entity)
+    if (!target) return false
+    let dx = entity.x - (target.x + 0.5)
+    let dy = entity.y - target.y
+    let dz = entity.z - (target.z + 0.5)
+    if (dx * dx + dy * dy + dz * dz > WORK_DIST_SQ) {
+        entity.navigation.moveTo(target.x + 0.5, target.y, target.z + 0.5, 1.0)
+        setTask(entity, '前往采摘瓜果')
+        return true
+    }
+    harvestGourd(level, inv, target, entity, pos)
+    setTask(entity, '采摘瓜果')
     return true
 }
 
@@ -1269,9 +1431,36 @@ function planGetItem(inv, chestInv, item, count, depth, visited, produce) {
     return null
 }
 
+// 找到配方树中所有缺失的叶子材料（不可再合成且不够），用于需求系统
+// produce=true 时目标物品必须生产，忽略其自身库存（用于台座/镐等 goal 物品）
+function findMissingMaterials(inv, chestInv, item, count, depth, visited, out, produce) {
+    out = out || []
+    if (depth > 8) return out
+    if (visited.indexOf(item) !== -1) return out
+    if (!produce && (inv[item] || 0) + (chestInv[item] || 0) >= count) return out
+    let rs = recipesByOutput(item)
+    if (rs.length) {
+        let r = rs[0]
+        let times = Math.ceil(count / (r.out[item] || 1))
+        // 工具（不消耗）：缺失时也作为缺失材料（与 planGetItem 保持一致）
+        if (r.tool) findMissingMaterials(inv, chestInv, r.tool, 1, depth + 1, visited.concat(item), out)
+        for (let inItem in r.in) {
+            findMissingMaterials(inv, chestInv, inItem, r.in[inItem] * times, depth + 1, visited.concat(item), out)
+        }
+        return out
+    }
+    let rough = roughForPolished(item)
+    if (rough) {
+        findMissingMaterials(inv, chestInv, rough, count, depth + 1, visited.concat(item), out)
+        return out
+    }
+    if (out.indexOf(item) === -1) out.push(item)
+    return out
+}
+
 function findEnchantableItem(inv, chestInv) {
-    for (let id in inv) if (inv[id] > 0 && isEnchantable(id)) return id
-    for (let id in chestInv) if (chestInv[id] > 0 && isEnchantable(id)) return id
+    for (let id in inv) if (inv[id] > 0 && isEnchantTarget(id)) return id
+    for (let id in chestInv) if (chestInv[id] > 0 && isEnchantTarget(id)) return id
     return null
 }
 
@@ -1522,7 +1711,7 @@ function stepPlan(entity, inv, pos) {
         let dy = entity.y - targetPos[1]
         let dz = entity.z - (targetPos[2] + 0.5)
         if (dx * dx + dy * dy + dz * dz > WORK_DIST_SQ) {
-            entity.navigation.moveTo(targetPos[0] + 0.5, targetPos[1], targetPos[2] + 0.5, 0.6)
+            entity.navigation.moveTo(targetPos[0] + 0.5, targetPos[1], targetPos[2] + 0.5, 1.0)
             setTask(entity, navTask + '（计划）')
             return true
         }
@@ -1559,21 +1748,47 @@ function stepPlan(entity, inv, pos) {
     return true
 }
 
-// 思考：为可达成目标生成计划
+// 物品最大堆叠
+function getMaxStack(id) {
+    try {
+        let s = Item.of(id)
+        if (s && !s.isEmpty() && s.getMaxStackSize) return s.getMaxStackSize()
+    } catch (e) {}
+    return 64
+}
+// 需求阈值：不可堆叠(1)时为 1，可堆叠物品为 1/2 最大堆叠
+function demandThreshold(id) {
+    return Math.max(1, Math.floor(getMaxStack(id) / 2))
+}
+
+// 思考：为可达成目标生成计划（多级需求：基座 + 镐 + 下界合金都参与）
 function thinkAndPlan(entity, inv, pos) {
     let level = entity.level
     let chestInv = getChestInvMap(level, pos)
     // 基座过滤：仅制作基座上的物品
     let pedestalItem = getPedestalItem(level, pos)
     if (pedestalItem && pedestalTargets[pedestalItem]) {
-        let plan = planGetItem(inv, chestInv, pedestalItem, 1, 0, [], true)
-        if (plan && plan.length) {
-            plan.push({ a: 'deposit', item: pedestalItem, count: 1 })
-            setPlan(entity, plan)
-            setTask(entity, '思考 ' + plan.map(describeStep).join(' → '))
-            return true
+        // 台座物品更新：清除旧需求，强制重新发起一次需求尝试
+        let lastPedestal = entity.persistentData.getString('lastPedestal')
+        if (lastPedestal !== pedestalItem) {
+            entity.persistentData.putString('lastPedestal', pedestalItem)
+            clearDemand(entity)
         }
-        return false
+        // 仓储中该物品已达阈值则不处理，但继续检查其他自动需求
+        if (availableCount(inv, chestInv, pedestalItem) >= demandThreshold(pedestalItem)) {
+            // 已达阈值，跳过本次基座合成
+        } else {
+            let plan = planGetItem(inv, chestInv, pedestalItem, 1, 0, [], true)
+            if (plan && plan.length) {
+                plan.push({ a: 'deposit', item: pedestalItem, count: 1 })
+                setPlan(entity, plan)
+                setTask(entity, '思考 ' + plan.map(describeStep).join(' → '))
+                return true
+            }
+            // 缺材料：触发需求（与其他自动需求并存轮询）
+            let missing = findMissingMaterials(inv, chestInv, pedestalItem, 1, 0, [], [], true)
+            if (missing.length) requestMaterials(entity, pedestalItem, missing)
+        }
     }
     if (pos.enchantingTable) {
         let plan = planEnchant(inv, chestInv)
@@ -1584,7 +1799,7 @@ function thinkAndPlan(entity, inv, pos) {
         }
     }
     if (pos.workstation) {
-        let plan = planPickaxe(level, pos, inv, chestInv)
+        let plan = planPickaxe(entity, level, pos, inv, chestInv)
         if (plan && plan.length) {
             setPlan(entity, plan)
             setTask(entity, '思考 ' + plan.map(describeStep).join(' → '))
@@ -1596,6 +1811,14 @@ function thinkAndPlan(entity, inv, pos) {
             setTask(entity, '思考 ' + plan.map(describeStep).join(' → '))
             return true
         }
+    }
+    // 纸需求：有粗宝石要打磨（需砂纸）但缺纸时，向园丁要纸
+    let needPaper = false
+    for (let rough in polishMap) {
+        if ((inv[rough] || 0) > 0) { needPaper = true; break }
+    }
+    if (needPaper && (inv['minecraft:paper'] || 0) === 0 && (chestInv['minecraft:paper'] || 0) === 0) {
+        requestMaterials(entity, 'minecraft:paper', ['minecraft:paper'])
     }
     return false
 }
@@ -1716,10 +1939,30 @@ const taskNames = {
     'follow': '跟随主人'
 }
 
+// ---------- 仆从命名 ----------
+const servantNames = ['凯特', '艾拉', '莉娅', '米娅', '索菲', '露西', '奥莉', '格雷', '菲恩', '诺拉']
+function getServantName(entity) {
+    let n = entity.persistentData.getString('ServantName')
+    return n || '学徒'
+}
+function assignServantName(entity) {
+    if (entity.persistentData.getString('ServantName')) return
+    let idx = Math.abs(entity.id) % servantNames.length
+    let name = servantNames[idx]
+    entity.persistentData.putString('ServantName', name)
+    try { entity.setCustomName(Text.of(name)); entity.setCustomNameVisible(true) } catch (e) {}
+}
+// 仆从标签：用于主人可见的消息，例如「学徒·凯特」
+function servantLabel(entity) {
+    let name = getServantName(entity)
+    let type = entity.type === 'kubejs:gardener' ? '园丁' : '学徒'
+    return type + '·' + name
+}
+
 function tellOwner(entity, task) {
     let owner = entity.getTrueOwner()
     if (owner && owner.isPlayer()) {
-        owner.tell(Text.of('§7[学徒] ' + task))
+        owner.tell(Text.of('§7[' + servantLabel(entity) + '] ' + task))
     }
 }
 
@@ -1733,7 +1976,7 @@ function setTask(entity, task) {
 function debugItem(entity, msg) {
     let owner = entity.getTrueOwner()
     if (owner && owner.isPlayer()) {
-        owner.tell(Text.of('§b[学徒操作] ' + msg))
+        owner.tell(Text.of('§b[' + servantLabel(entity) + '] ' + msg))
     }
 }
 
@@ -1770,15 +2013,11 @@ global.apprenticeAI = (entity) => {
     depositSurplus(entity, inv, pos)
     // 背景工序：拾取附近掉落在地上的物品（作物、骨粉等）
     collectGroundItems(entity, inv)
+    // 背景工序：清理已满足的需求
+    cleanupDemands(entity, inv, pos)
 
-    // 农田：搜索 8 格内成熟作物/紫水晶簇并处理（优先于专注队列）
-    if (handleFarming(entity, inv, pos)) {
-        writeInv(entity, inv)
-        return
-    }
-
-    // 种植盆：搜索 8 格内种植盆的成熟作物并收割补种
-    if (handlePlanterFarming(entity, inv, pos)) {
+    // 紫水晶：搜索 8 格内紫水晶簇并采集（采摘/种植已交给园丁）
+    if (handleAmethyst(entity, inv, pos)) {
         writeInv(entity, inv)
         return
     }
@@ -1789,8 +2028,14 @@ global.apprenticeAI = (entity) => {
         return
     }
 
-    // 思考：为可达成目标（附魔/下界合金）生成计划
+    // 思考：为可达成目标（附魔/下界合金）生成计划（并更新/清除需求）
     if (thinkAndPlan(entity, inv, pos)) {
+        writeInv(entity, inv)
+        return
+    }
+
+    // 需求系统：处理材料请求（寻路/交换/失败）
+    if (processDemand(entity, inv)) {
         writeInv(entity, inv)
         return
     }
@@ -1824,7 +2069,7 @@ global.apprenticeAI = (entity) => {
         let dy = entity.y - p[1]
         let dz = entity.z - (p[2] + 0.5)
         if (dx * dx + dy * dy + dz * dz > WORK_DIST_SQ) {
-            entity.navigation.moveTo(p[0] + 0.5, p[1], p[2] + 0.5, 0.6)
+            entity.navigation.moveTo(p[0] + 0.5, p[1], p[2] + 0.5, 1.0)
             setTask(entity, '前往 ' + taskNames[focus])
             writeInv(entity, inv)
             return
@@ -1926,20 +2171,36 @@ function useCursedInfuser(level, inv, pos, entity) {
 
 // ---------- 服务器 tick 循环 ----------
 let apprenticeTick = 0
+let servantClock = 0 // 全局 tick 计数（用于需求冷却）
 ServerEvents.tick(event => {
+    servantClock++
     apprenticeTick++
     if (apprenticeTick % 20 !== 0) return
     apprenticeTick = 0
 
     event.server.entities.forEach(entity => {
-        if (entity.type !== 'kubejs:apprentice') return
-        global.apprenticeAI(entity)
+        if (entity.type === 'kubejs:apprentice') {
+            // 统一服装：强制非魔法变体（紫袍）
+            try { if (entity.isMagic()) entity.setMagic(false) } catch (e) {}
+            global.apprenticeAI(entity)
+        } else if (entity.type === 'kubejs:gardener') {
+            global.gardenerAI(entity)
+        }
     })
+})
+
+// ---------- 统一服装 + 命名：生成时即强制非魔法变体并命名 ----------
+EntityEvents.spawned(event => {
+    if (event.entity.type !== 'kubejs:apprentice' && event.entity.type !== 'kubejs:gardener') return
+    assignServantName(event.entity)
+    try {
+        if (event.entity.isMagic()) event.entity.setMagic(false)
+    } catch (e) {}
 })
 
 // ---------- 生成时绑定主人（等价 goety 仆从刷怪蛋的 setTrueOwner） ----------
 EntityEvents.spawned(event => {
-    if (event.entity.type !== 'kubejs:apprentice') return
+    if (event.entity.type !== 'kubejs:apprentice' && event.entity.type !== 'kubejs:gardener') return
     let entity = event.entity
     if (entity.getTrueOwner()) return
 
@@ -1990,4 +2251,529 @@ ServerEvents.commandRegistry(event => {
                 return 1
             })
     )
+})
+
+// ---------- 需求系统（工作类仆从间材料请求） ----------
+const $ParticleTypes = Java.loadClass('net.minecraft.core.particles.ParticleTypes')
+const DEMAND_COOLDOWN = 40 // 需求失败后冷却 40 tick（2 秒）再重试
+
+// 材料类别 -> 负责提供的仆从类型（未列出的类别允许任意仆从提供）
+const materialProviderMap = {
+    'crop': ['kubejs:gardener'],
+    'seed': ['kubejs:gardener'],
+    'food': ['kubejs:gardener'],
+    'mineral': ['kubejs:apprentice'],
+    'goety': ['kubejs:apprentice'],
+    'tool': ['kubejs:apprentice'],
+    'armor': ['kubejs:apprentice']
+}
+function canProvideItem(item, servantType) {
+    let cat = categoryOf(item)
+    let providers = materialProviderMap[cat]
+    if (!providers) return true
+    return providers.indexOf(servantType) !== -1
+}
+function canProvideAny(items, servantType) {
+    for (let item of items) if (canProvideItem(item, servantType)) return true
+    return false
+}
+
+function isWorkServant(e) {
+    return e.type === 'kubejs:apprentice' || e.type === 'kubejs:gardener'
+}
+function getDemands(entity) {
+    try {
+        let s = entity.persistentData.getString('demands')
+        return s ? JSON.parse(s) : []
+    } catch (e) {
+        entity.persistentData.putString('demands', '')
+        return []
+    }
+}
+function setDemands(entity, arr) {
+    entity.persistentData.putString('demands', JSON.stringify(arr))
+}
+// 发起材料请求（幂等：相同目标不重复发起）；多需求并存、轮询
+function requestMaterials(entity, goal, items) {
+    items = (items || []).filter(x => x != null)
+    if (items.length === 0) return
+    let demands = getDemands(entity)
+    for (let d of demands) {
+        if (d.goal === goal) {
+            // 已有该目标的需求：缺料清单变化时更新（保留冷却，实现临时挂起）
+            if ((d.items || []).join('|') !== items.join('|')) {
+                d.items = items.slice()
+            }
+            setDemands(entity, demands)
+            return
+        }
+    }
+    demands.push({ goal: goal, items: items.slice(), exclude: [entity.id], retryTick: 0 })
+    setDemands(entity, demands)
+}
+function requestMaterial(entity, item) {
+    requestMaterials(entity, item, [item])
+}
+function clearDemand(entity) {
+    setDemands(entity, [])
+}
+// 清理已满足的需求（目标已不再缺料），每轮 AI 开头调用
+function cleanupDemands(entity, inv, pos) {
+    let demands = getDemands(entity)
+    if (demands.length === 0) return
+    let chestInv = getChestInvMap(entity.level, pos)
+    demands = demands.filter(d => {
+        let goal = d.goal
+        if (!goal) return false // 无目标，移除
+        let missing = findMissingMaterials(inv, chestInv, goal, 1, 0, [], [], true)
+        return missing.length > 0 // 仍缺料，保留
+    })
+    setDemands(entity, demands)
+}
+function spawnDemandParticles(entity, happy) {
+    try {
+        let p = happy ? $ParticleTypes.HAPPY_VILLAGER : $ParticleTypes.ANGRY_VILLAGER
+        entity.level.spawnParticles(p, true, entity.x, entity.y + 1, entity.z, 0.4, 0.5, 0.4, 6, 0.05)
+    } catch (e) {}
+}
+// 处理需求队列（轮询 + 临时挂起）；返回 true 表示本轮正在处理需求
+function processDemand(entity, inv) {
+    let demands = getDemands(entity)
+    if (demands.length === 0) return false
+    let level = entity.level
+    let now = servantClock
+    // 轮询：按 retryTick 排序，取最早可重试的需求
+    demands.sort((a, b) => (a.retryTick || 0) - (b.retryTick || 0))
+    let d = demands[0]
+    let items = (d.items || (d.item ? [d.item] : [])).filter(x => x != null)
+    if (now < (d.retryTick || 0)) return false // 全部冷却中，暂不重试
+    let aabb = new $AABB(entity.x - 16, entity.y - 16, entity.z - 16, entity.x + 16, entity.y + 16, entity.z + 16)
+    let candidates = []
+    for (let e of level.getEntitiesWithin(aabb)) {
+        if (!isWorkServant(e)) continue
+        if (e.id === entity.id) continue
+        if (d.exclude.indexOf(e.id) !== -1) continue
+        if (!canProvideAny(items, e.type)) continue
+        candidates.push(e)
+    }
+    if (candidates.length === 0) {
+        spawnDemandParticles(entity, false)
+        tellOwner(entity, '需求 ' + items.join('/') + ' 失败：附近 16 格内无其他可提供的工作仆从（已排除 ' + (d.exclude.length - 1) + ' 个）')
+        d.retryTick = now + DEMAND_COOLDOWN
+        d.exclude = [entity.id]
+        setDemands(entity, demands)
+        return false
+    }
+    candidates.sort((a, b) => {
+        let da = (a.x - entity.x) * (a.x - entity.x) + (a.y - entity.y) * (a.y - entity.y) + (a.z - entity.z) * (a.z - entity.z)
+        let db = (b.x - entity.x) * (b.x - entity.x) + (b.y - entity.y) * (b.y - entity.y) + (b.z - entity.z) * (b.z - entity.z)
+        return da - db
+    })
+    let provider = candidates[0]
+    let dx = entity.x - provider.x, dy = entity.y - provider.y, dz = entity.z - provider.z
+    if (dx * dx + dy * dy + dz * dz > WORK_DIST_SQ) {
+        entity.navigation.moveTo(provider.x, provider.y, provider.z, 1.0)
+        setTask(entity, '向 ' + servantLabel(provider) + ' 请求 ' + items.join('/') + '（前往查阅其背包与仓库）')
+        return true
+    }
+    let pinv = readInv(provider)
+    let providerPos = readPositions(provider)
+    let chestInv = getChestInvMap(level, providerPos)
+    // 找对方第一个持有的材料
+    let given = null
+    let fromInv = false
+    let crafted = false
+    for (let item of items) {
+        if ((pinv[item] || 0) > 0) { given = item; fromInv = true; break }
+        if ((chestInv[item] || 0) > 0) { given = item; fromInv = false; break }
+    }
+    // 多级需求：对方没有直接持有，模拟其能否合成该材料
+    if (!given) {
+        for (let item of items) {
+            let missing = findMissingMaterials(pinv, chestInv, item, 1, 0, [], [], true)
+            if (missing.length === 0) {
+                let plan = planGetItem(pinv, chestInv, item, 1, 0, [], true)
+                if (plan && plan.length) {
+                    for (let step of plan) executeStep(provider, pinv, providerPos, step)
+                    writeInv(provider, pinv)
+                    given = item
+                    fromInv = true
+                    crafted = true
+                    break
+                }
+            }
+        }
+    }
+    if (given) {
+        if (fromInv) {
+            removeInv(pinv, given, 1)
+            writeInv(provider, pinv)
+            tellOwner(entity, '从 ' + servantLabel(provider) + ' 取得 ' + given + (crafted ? '（其合成有货）' : '（其背包有货）'))
+        } else {
+            removeFromStorage(level, providerPos, given, 1)
+            tellOwner(entity, '从 ' + servantLabel(provider) + ' 取得 ' + given + '（其仓库有货）')
+        }
+        addInv(inv, given, 1)
+        spawnDemandParticles(entity, true)
+        spawnDemandParticles(provider, true)
+        demands.splice(0, 1) // 该需求已满足，移除；下一轮重新评估可连续请求
+        setDemands(entity, demands)
+        return false
+    } else {
+        spawnDemandParticles(entity, false)
+        spawnDemandParticles(provider, false)
+        tellOwner(entity, servantLabel(provider) + ' 无 ' + items.join('/') + '（已查阅其背包与仓库）')
+        d.exclude.push(provider.id)
+        d.retryTick = now + DEMAND_COOLDOWN
+        setDemands(entity, demands)
+        return true
+    }
+}
+
+// ---------- 园丁 ----------
+const gardenerIngredients = [
+    { id: 'minecraft:paper', threshold: 32 },
+    { id: 'minecraft:sugar', threshold: 32 },
+    { id: 'quark:sugar_cane_block', threshold: 32 },
+    { id: 'minecraft:glistering_melon_slice', threshold: 8 },
+    { id: 'minecraft:golden_carrot', threshold: 8 },
+    { id: 'minecraft:golden_apple', threshold: 8 },
+    { id: 'minecraft:magma_cream', threshold: 8 },
+    { id: 'minecraft:fermented_spider_eye', threshold: 8 },
+    { id: 'minecraft:blaze_powder', threshold: 8 }
+]
+const brewRecipes = [
+    { ingredient: 'minecraft:glistering_melon_slice', potion: 'minecraft:healing' },
+    { ingredient: 'minecraft:golden_carrot', potion: 'minecraft:night_vision' },
+    { ingredient: 'minecraft:magma_cream', potion: 'minecraft:fire_resistance' },
+    { ingredient: 'minecraft:fermented_spider_eye', potion: 'minecraft:weakness' },
+    { ingredient: 'minecraft:sugar', potion: 'minecraft:swiftness' },
+    { ingredient: 'minecraft:ghast_tear', potion: 'minecraft:regeneration' },
+    { ingredient: 'minecraft:rabbit_foot', potion: 'minecraft:leaping' }
+]
+function potionId(stack) {
+    try {
+        if (stack.nbt && stack.nbt.Potion) return String(stack.nbt.Potion)
+    } catch (e) {}
+    return null
+}
+function isWaterBottle(stack) {
+    return stack.id === 'minecraft:potion' && potionId(stack) === 'minecraft:water'
+}
+function isAwkward(stack) {
+    return stack.id === 'minecraft:potion' && potionId(stack) === 'minecraft:awkward'
+}
+function isFinishedPotion(stack) {
+    if (stack.id !== 'minecraft:potion') return false
+    let p = potionId(stack)
+    return p && p !== 'minecraft:water' && p !== 'minecraft:awkward'
+}
+
+// ---------- 园丁交互 ----------
+global.gardenerInteract = (ctx) => {
+    const { entity, player } = ctx
+    if (!player || player.level.isClientSide()) return
+    let held = player.mainHandItem
+    if (held.id === 'kubejs:store_list') {
+        let list = listPositions(held)
+        let pos = readPositions(entity)
+        pos.barrels = list.map(p => [p[0], p[1], p[2]])
+        writePositions(entity, pos)
+        player.tell('已设置园丁 ' + list.length + ' 个木桶位置')
+        return
+    }
+    if (held.id !== 'goety:waystone') held = player.offHandItem
+    if (held.id !== 'goety:waystone') return
+    if (!$WaystoneItem.hasBlock(held)) return
+    let blockPos = $WaystoneItem.getBlockPos(held)
+    if (!blockPos) return
+    let x = blockPos.getX(), y = blockPos.getY(), z = blockPos.getZ()
+    let blockId = player.level.getBlock(x, y, z).id
+    let key = null
+    if (blockId === 'minecraft:crafting_table') key = 'workstation'
+    else if (blockId === 'minecraft:brewing_stand') key = 'brewingStand'
+    else if (blockId === 'minecraft:hopper') key = 'hopper'
+    else if (blockId === 'minecraft:chest' || blockId === 'minecraft:trapped_chest' || blockId === 'minecraft:barrel') key = 'chest'
+    else if (blockId === 'goety:raiding_chest') key = 'raiderChest'
+    if (!key) { player.tell('园丁无法使用该方块'); return }
+    let pos = readPositions(entity)
+    pos[key] = [x, y, z]
+    writePositions(entity, pos)
+    player.tell('已设置园丁的 ' + key + ' 位置')
+}
+
+// 从存储容器中按谓词找物品栈
+function findStackInStorage(level, pos, pred) {
+    for (let be of getStorageContainers(level, pos)) {
+        for (let i = 0; i < be.getContainerSize(); i++) {
+            let s = be.getItem(i)
+            if (!s.isEmpty() && pred(s)) return { be: be, slot: i, stack: s }
+        }
+    }
+    return null
+}
+
+// 装水：把玻璃瓶装满成水瓶（存 NBT）
+function fillWaterBottles(entity, inv, pos) {
+    let level = entity.level
+    if (findStackInStorage(level, pos, isWaterBottle)) return false
+    if ((inv['minecraft:glass_bottle'] || 0) < 1) return false
+    let water = findWaterSource(level, entity)
+    if (!water) return false
+    let dx = entity.x - (water[0] + 0.5), dy = entity.y - water[1], dz = entity.z - (water[2] + 0.5)
+    if (dx * dx + dy * dy + dz * dz > WORK_DIST_SQ) {
+        entity.navigation.moveTo(water[0] + 0.5, water[1], water[2] + 0.5, 1.0)
+        setTask(entity, '前往水源装水')
+        return true
+    }
+    let count = Math.min(inv['minecraft:glass_bottle'], 3)
+    removeInv(inv, 'minecraft:glass_bottle', count)
+    let containers = getStorageContainers(level, pos)
+    for (let i = 0; i < count; i++) {
+        let wb = Item.of('minecraft:potion', '{Potion:"minecraft:water"}')
+        let placed = false
+        for (let c of containers) {
+            let slot = findEmptySlot(c)
+            if (slot !== -1) { c.setItem(slot, wb); placed = true; break }
+        }
+        if (!placed) addInv(inv, 'minecraft:potion', 1)
+    }
+    debugItem(entity, '装 ' + count + ' 个水瓶')
+    return true
+}
+
+// ---------- 酿造 ----------
+function useBrewingStand(entity, inv, pos) {
+    let level = entity.level
+    let bp = pos.brewingStand
+    let be = getContainerAt(level, bp)
+    if (!be) return false
+    let dx = entity.x - (bp[0] + 0.5)
+    let dy = entity.y - bp[1]
+    let dz = entity.z - (bp[2] + 0.5)
+    if (dx * dx + dy * dy + dz * dz > WORK_DIST_SQ) {
+        entity.navigation.moveTo(bp[0] + 0.5, bp[1], bp[2] + 0.5, 1.0)
+        setTask(entity, '前往酿造台')
+        return true
+    }
+    let did = []
+    // 燃料
+    if (be.getItem(4).isEmpty()) {
+        if ((inv['minecraft:blaze_powder'] || 0) > 0) {
+            removeInv(inv, 'minecraft:blaze_powder', 1)
+            be.setItem(4, Item.of('minecraft:blaze_powder', 1))
+            did.push('加烈焰粉')
+        }
+    }
+    let slot0 = be.getItem(0), slot1 = be.getItem(1), slot2 = be.getItem(2)
+    let allWater = !slot0.isEmpty() && isWaterBottle(slot0) && !slot1.isEmpty() && isWaterBottle(slot1) && !slot2.isEmpty() && isWaterBottle(slot2)
+    let allAwkward = !slot0.isEmpty() && isAwkward(slot0) && !slot1.isEmpty() && isAwkward(slot1) && !slot2.isEmpty() && isAwkward(slot2)
+    let anyFinished = isFinishedPotion(slot0) || isFinishedPotion(slot1) || isFinishedPotion(slot2)
+    // 取最终药水（保留 NBT）
+    if (anyFinished) {
+        let st = getStorageContainers(level, pos)
+        for (let i = 0; i < 3; i++) {
+            let s = be.getItem(i)
+            if (isFinishedPotion(s)) {
+                let placed = false
+                for (let c of st) {
+                    let slot = findEmptySlot(c)
+                    if (slot !== -1) { c.setItem(slot, s); placed = true; break }
+                }
+                if (placed) be.setItem(i, $ItemStack.EMPTY)
+                did.push('取 ' + potionId(s))
+            }
+        }
+        if (did.length) debugItem(entity, '酿造 ' + did.join(', '))
+        return true
+    }
+    // 放水瓶
+    if (slot0.isEmpty() || slot1.isEmpty() || slot2.isEmpty()) {
+        let wb = findStackInStorage(level, pos, isWaterBottle)
+        if (wb) {
+            for (let i = 0; i < 3; i++) {
+                if (be.getItem(i).isEmpty()) {
+                    be.setItem(i, wb.stack)
+                    wb.be.setItem(wb.slot, $ItemStack.EMPTY)
+                    did.push('放水瓶')
+                    break
+                }
+            }
+        }
+    }
+    // 放材料：水→下界疣；awkward→药水材料
+    if (be.getItem(3).isEmpty()) {
+        if (allWater) {
+            if ((inv['minecraft:nether_wart'] || 0) > 0) {
+                removeInv(inv, 'minecraft:nether_wart', 1)
+                be.setItem(3, Item.of('minecraft:nether_wart', 1))
+                did.push('放下界疣')
+            }
+        } else if (allAwkward) {
+            let chestInv = getChestInvMap(level, pos)
+            for (let r of brewRecipes) {
+                if ((inv[r.ingredient] || 0) + (chestInv[r.ingredient] || 0) > 0) {
+                    if ((inv[r.ingredient] || 0) > 0) removeInv(inv, r.ingredient, 1)
+                    else removeFromStorage(level, pos, r.ingredient, 1)
+                    be.setItem(3, Item.of(r.ingredient, 1))
+                    did.push('放 ' + r.ingredient)
+                    break
+                }
+            }
+        }
+    }
+    if (did.length) debugItem(entity, '酿造 ' + did.join(', '))
+    return false
+}
+
+// ---------- 园丁炼药材料合成 ----------
+function thinkGardenerCraft(entity, inv, pos) {
+    if (!pos.workstation) return false
+    let level = entity.level
+    let chestInv = getChestInvMap(level, pos)
+    for (let entry of gardenerIngredients) {
+        let ingredient = entry.id
+        let threshold = entry.threshold || 8
+        if (availableCount(inv, chestInv, ingredient) >= threshold) continue
+        let rs = recipesByOutput(ingredient)
+        if (!rs.length) continue
+        let r = rs[0]
+        let enough = true
+        for (let k in r.in) {
+            if (availableCount(inv, chestInv, k) < r.in[k]) { enough = false; break }
+        }
+        if (!enough) {
+            // 为每个缺料的炼药材料发起需求（多需求并存、轮询）
+            let missing = findMissingMaterials(inv, chestInv, ingredient, 1, 0, [], [], true)
+            if (missing.length) requestMaterials(entity, ingredient, missing)
+            continue
+        }
+        let plan = []
+        for (let k in r.in) {
+            let sub = planGetItem(inv, chestInv, k, r.in[k], 0, [])
+            if (!sub) { enough = false; break }
+            plan = plan.concat(sub)
+        }
+        if (!enough) continue
+        plan.push({ a: 'craft', recipe: r.id })
+        setPlan(entity, plan)
+        setTask(entity, '思考 ' + plan.map(describeStep).join(' → '))
+        return true
+    }
+    return false
+}
+
+// ---------- 园丁主 AI ----------
+global.gardenerAI = (entity) => {
+    if (!entity.isGuardingArea()) {
+        setTask(entity, taskNames.follow)
+        return
+    }
+    let level = entity.level
+    let pos = readPositions(entity)
+    let inv = readInv(entity)
+
+    polishGems(inv, entity)
+    depositSurplus(entity, inv, pos)
+    collectGroundItems(entity, inv)
+    cleanupDemands(entity, inv, pos)
+
+    // 农田（种植盆 + 砰砰疣 + 下界疣）
+    if (handleFarming(entity, inv, pos)) { writeInv(entity, inv); return }
+    if (handlePlanterFarming(entity, inv, pos)) { writeInv(entity, inv); return }
+    // 甘蔗（高度>2，只割上部）
+    if (handleSugarcane(entity, inv, pos)) { writeInv(entity, inv); return }
+    // 西瓜/南瓜（优先精准采集斧头）
+    if (handleGourd(entity, inv, pos)) { writeInv(entity, inv); return }
+
+    // 装水（水瓶）
+    if (pos.brewingStand && fillWaterBottles(entity, inv, pos)) { writeInv(entity, inv); return }
+
+    // 酿造
+    if (pos.brewingStand && useBrewingStand(entity, inv, pos)) { writeInv(entity, inv); return }
+
+    // 执行计划
+    if (stepPlan(entity, inv, pos)) { writeInv(entity, inv); return }
+
+    // 思考炼药材料（并更新/清除需求）
+    if (thinkGardenerCraft(entity, inv, pos)) { writeInv(entity, inv); return }
+
+    // 需求系统：处理材料请求
+    if (processDemand(entity, inv)) { writeInv(entity, inv); return }
+
+    // 专注队列：存储
+    let mem = getMemory(entity)
+    mem = mem.filter(key => hasPosition(pos, key) && needsWork(level, inv, pos, key))
+    for (let key of positionPriority) {
+        if (mem.length >= 5) break
+        if (hasPosition(pos, key) && needsWork(level, inv, pos, key) && mem.indexOf(key) === -1) mem.push(key)
+    }
+    setMemory(entity, mem)
+    let focus = mem[0]
+    if (focus) {
+        let p = focus === 'barrels' ? firstStoragePos(pos) : pos[focus]
+        if (!p) { mem.shift(); setMemory(entity, mem); writeInv(entity, inv); return }
+        let dx = entity.x - (p[0] + 0.5), dy = entity.y - p[1], dz = entity.z - (p[2] + 0.5)
+        if (dx * dx + dy * dy + dz * dz > WORK_DIST_SQ) {
+            entity.navigation.moveTo(p[0] + 0.5, p[1], p[2] + 0.5, 1.0)
+            setTask(entity, '前往 ' + taskNames[focus])
+            writeInv(entity, inv)
+            return
+        }
+        doWork(entity, inv, pos, focus)
+        setTask(entity, taskNames[focus])
+        writeInv(entity, inv)
+        return
+    }
+    setTask(entity, taskNames.idle)
+    writeInv(entity, inv)
+}
+
+// ---------- 命令：查看附近工作类仆从需求 ----------
+ServerEvents.commandRegistry(event => {
+    const { commands } = event
+    event.register(
+        commands.literal('requiem')
+            .then(commands.literal('debug')
+                .then(commands.literal('requests')
+                    .executes(ctx => {
+                        let player = ctx.source.player
+                        if (!player) return 0
+                        let found = []
+                        let aabb = new $AABB(player.x - 32, player.y - 32, player.z - 32, player.x + 32, player.y + 32, player.z + 32)
+                        for (let e of player.level.getEntitiesWithin(aabb)) {
+                            if (!isWorkServant(e)) continue
+                            let demands = getDemands(e)
+                            for (let d of demands) {
+                                let items = (d.items || (d.item ? [d.item] : [])).filter(x => x != null)
+                                found.push(servantLabel(e) + ': 请求 ' + items.join('/'))
+                            }
+                        }
+                        if (found.length === 0) {
+                            ctx.source.sendSuccess(Text.of('附近没有工作类仆从的需求'), false)
+                        } else {
+                            for (let line of found) {
+                                ctx.source.sendSuccess(Text.of('§6[需求] §r' + line), false)
+                            }
+                        }
+                        return 1
+                    })))
+    )
+})
+
+// ---------- 敲击 desk_bell：强制周围仆从重跑一次需求检测 ----------
+BlockEvents.rightClicked(event => {
+    if (event.block.id !== 'create:desk_bell') return
+    let player = event.player
+    if (!player || player.level.isClientSide()) return
+    let level = player.level
+    let aabb = new $AABB(event.block.x - 32, event.block.y - 32, event.block.z - 32, event.block.x + 32, event.block.y + 32, event.block.z + 32)
+    let count = 0
+    for (let e of level.getEntitiesWithin(aabb)) {
+        if (!isWorkServant(e)) continue
+        // 清除旧需求（含冷却），下一轮 thinkAndPlan 会立即重新 findMissingMaterials + 发起新需求
+        clearDemand(e)
+        count++
+    }
+    if (count > 0) player.tell('§e已强制 ' + count + ' 个工作仆从重新检测需求')
 })
