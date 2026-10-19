@@ -27,4 +27,6 @@ StartupEvents.registry('item', event=>{
 
     event.create('kubejs:smelt_list').maxStackSize(1)
     event.create('kubejs:store_list').maxStackSize(1)
+    event.create('kubejs:torch_list').maxStackSize(1)
+    event.create('kubejs:strike_map').maxStackSize(1)
 })

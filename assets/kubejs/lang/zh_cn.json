@@ -373,6 +373,8 @@
   "item.kubejs.makeshift_notebook":"简易笔记",
   "item.kubejs.smelt_list":"烧炼列表",
   "item.kubejs.store_list":"存储列表",
+  "item.kubejs.torch_list":"火炬列表",
+  "item.kubejs.strike_map":"炮射地图",
 
   "kubejs.tooltip.sculptor_staff":"§7远非完美§r",
   "kubejs.casting.none":"似乎你该往上面写点东西，而不是直接使用它……",
